@@ -3,37 +3,56 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Configuration;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Server
+namespace ServerProyect
 {
-    public class Program
+    public class Server
     {
+
+        public static bool running = true;
+
         static void Main(string[] args)
         {
-            Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            IPEndPoint localServerEndpoint = new IPEndPoint(IPAddress.Parse("172.17.6.3"), 3500);
+            ServerStart();
+        }
 
-            server.Bind(localServerEndpoint);
-            server.Listen(1);
-            Console.WriteLine("Server started");
-
-            bool notFinished = true;
-            int threadCount = 0;
-
-            while (notFinished)
+        private static void ServerStart()
+        {
+            try
             {
-                Socket clientConnection = server.Accept();
-                threadCount++;
-                int i = threadCount;
-                Thread clientTrhead = new Thread(() => threadFunc(clientConnection, i));
-                clientTrhead.Start();
+                string serverIP = ConfigurationManager.AppSettings["serverIP"];
+                int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
+
+                Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                IPEndPoint localServerEndpoint = new IPEndPoint(IPAddress.Parse(serverIP), serverPort);
+                server.Bind(localServerEndpoint);
+                server.Listen(10);
+                Console.WriteLine("Server started");
+
+                
+                int threadCount = 0;
+
+                while (running)
+                {
+                    Socket clientConnection = server.Accept();
+                    threadCount++;
+                    int i = threadCount;
+                    Thread clientTrhead = new Thread(() => threadFunc(clientConnection, i));
+                    clientTrhead.Start();
+                }
+                server.Close();
+                Console.WriteLine("Server finished");
+                Console.ReadLine();
             }
-            server.Close();
-            Console.WriteLine("Server finished");
-            Console.ReadLine();
+            catch (Exception)
+            {
+                Console.WriteLine("Imposible conectar");
+            }
+            
         }
 
         static void threadFunc(Socket clientConnection, int threadId)

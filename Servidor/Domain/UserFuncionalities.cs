@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cliente
+namespace ClientProyect
 {
     public class UserFuncionalities
     {
@@ -59,7 +59,7 @@ namespace Cliente
         }
         public void showUsersInServer()
         {
-            throw new NotImplementedException;
+            throw new NotImplementedException();
         }
     }
 }

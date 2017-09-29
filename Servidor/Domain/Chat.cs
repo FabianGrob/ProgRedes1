@@ -1,11 +1,11 @@
-﻿using Domain;
+﻿
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cliente
+namespace ClientProyect
 {
     public class Chat
     {
@@ -16,7 +16,11 @@ namespace Cliente
         public ValidReturn addMessage(string line, User sender)
         {
             ValidReturn added = new ValidReturn();
-            Message newMessage = new Message(line, sender);
+            Message newMessage = new Message()
+            {
+                User = sender,
+                Line = line
+            };
             added = newMessage.isLineValid();
             if (added.Valid)
             {

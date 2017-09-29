@@ -4,16 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cliente
+namespace ClientProyect
 {
     public class Message
     {
         public string Line { get; set; }
         public User User { get; set; }
-        public Message(string line, User sender)
+
+        public Message()
         {
-            Line = line;
-            User = sender;
+            Line = "";
+            User = null;
         }
         public ValidReturn isLineValid()
         {

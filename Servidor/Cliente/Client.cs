@@ -5,28 +5,44 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
+using System.Configuration;
 
-namespace Cliente
+namespace ClientProyect
 {
-    class Program
+    class Client
     {
+
+        public static bool connected = false;
+
         static void Main(string[] args)
+        {
+            ClientStart();
+
+        }
+
+        private static void ClientStart()
         {
             Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
             {
-                EndPoint localEP = new IPEndPoint(IPAddress.Parse("172.17.6.3"), 3400); //IP de mi maquina, puerto cualquiera libre              
-                IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("172.17.6.1"), 3500); //IP de la maquina servidor, puerto cualquiera libre
+                string clientIP = ConfigurationManager.AppSettings["clientIP"];
+                Random randomValue = new Random();
+                int port = randomValue.Next(6001, 6500);
+                
+                int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
+                string serverIP = ConfigurationManager.AppSettings["serverIP"];
 
-                client.Bind(localEP);
-                client.Connect(remoteEP);
-                bool notFinished = true;
-                while (notFinished)
+                client.Bind(new IPEndPoint(IPAddress.Parse(clientIP), port));
+                client.Connect(IPAddress.Parse(serverIP), serverPort);
+
+                connected = true;
+
+                while (connected)
                 {
                     string dataToSend = Console.ReadLine();
                     if (string.Compare(dataToSend, "exit") == 0)
                     {
-                        notFinished = false;
+                        connected = false;
                     }
                     else
                     {
@@ -49,8 +65,6 @@ namespace Cliente
                 Console.WriteLine("Catched exception: " + e.Message);
                 Console.ReadLine();
             }
-
-
         }
     }
 }
