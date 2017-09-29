@@ -6,13 +6,15 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
 using System.Configuration;
+using System.Threading;
 
 namespace ClientProyect
 {
     class Client
     {
 
-        public static bool connected = false;
+        public static bool connectedToServer = false;
+        public static bool userLogedIn = false;
 
         static void Main(string[] args)
         {
@@ -28,43 +30,56 @@ namespace ClientProyect
                 string clientIP = ConfigurationManager.AppSettings["clientIP"];
                 Random randomValue = new Random();
                 int port = randomValue.Next(6001, 6500);
-                
+
                 int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
                 string serverIP = ConfigurationManager.AppSettings["serverIP"];
 
                 client.Bind(new IPEndPoint(IPAddress.Parse(clientIP), port));
                 client.Connect(IPAddress.Parse(serverIP), serverPort);
 
-                connected = true;
+                connectedToServer = true;
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine("Error. Imposible conectar");
+                Thread.Sleep(2000);
+                ClientStart();
+            }
 
-                while (connected)
+
+            if (connectedToServer)
+            {
+                Console.WriteLine("Ingrese su nombre de usuario: ");
+                while (!userLogedIn)
                 {
-                    string dataToSend = Console.ReadLine();
-                    if (string.Compare(dataToSend, "exit") == 0)
+                    string userName = Console.ReadLine();
+                    while (userName.Equals(""))
                     {
-                        connected = false;
+                        Console.WriteLine("Ingrese su nombre de usuario: ");
+                        userName = Console.ReadLine();
                     }
+                   
+                    if (string.Compare(userName, "exit") == 0)
+                    {
+                        connectedToServer = false;
+                    }
+
                     else
                     {
-                        byte[] data = Encoding.UTF8.GetBytes(dataToSend);
+                        byte[] data = Encoding.UTF8.GetBytes(userName);
                         int iDataSent = client.Send(data);
                         Console.WriteLine("Sent " + iDataSent + " bytes");
                     }
                 }
+
+
                 client.Shutdown(SocketShutdown.Both);
                 client.Close();
                 Console.ReadLine();
             }
-            catch (SocketException sE)
-            {
-                Console.WriteLine("Catched socket exception: " + sE.Message);
-                Console.ReadLine();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Catched exception: " + e.Message);
-                Console.ReadLine();
-            }
         }
+            
+            
+        
     }
 }
