@@ -10,7 +10,7 @@ namespace Domain
     {
         public User User { get; set; }
 
-        public void printFriends()
+        public void PrintFriends()
         {
             Console.WriteLine("Your friends: ");
             foreach (User friend in User.Friends)
@@ -26,9 +26,9 @@ namespace Domain
         {
             User.PendingFriends.Add(anUser);
         }
-        public ValidReturn SendSolicitude(User anUser)
+        public ValidReturn SendRequest(User anUser)
         {
-            ValidReturn valid = new ValidReturn(true, "Solicitude sent");
+            ValidReturn valid = new ValidReturn(true, "Request sent");
             if (User.Friends.Contains(anUser))
             {
                 valid.ReAssign(false, "You are already friends!");
@@ -42,7 +42,7 @@ namespace Domain
             }
             return valid;
         }
-        public void Showsolicitudes()
+        public void ShowRequests()
         {
             Console.WriteLine("Your friend solicitudes: ");
             foreach (User possibleFriend in User.PendingFriends)
@@ -50,14 +50,14 @@ namespace Domain
                 Console.WriteLine(possibleFriend.UserName + " has " + possibleFriend.Friends.Count + " friends ");
             }
         }
-        public ValidReturn AcceptSolicitude(User anUser)
+        public ValidReturn AcceptRequest(User anUser)
         {
             ValidReturn valid = new ValidReturn(true, "You are are now friends!");
             AddFriend(anUser);
             User.PendingFriends.Remove(anUser);
             return valid;
         }
-        public void showUsersInServer()
+        public void ShowUsersInServer()
         {
             throw new NotImplementedException();
         }

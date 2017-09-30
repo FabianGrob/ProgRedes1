@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace ClientProyect
 {
-    class Client
+    public class Client
     {
 
         public static bool connectedToServer = false;

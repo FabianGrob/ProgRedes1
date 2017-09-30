@@ -7,6 +7,7 @@ using System.Configuration;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Domain;
 
 namespace ServerProyect
 {
@@ -14,6 +15,9 @@ namespace ServerProyect
     {
 
         public static bool running = true;
+        public List<User> registeredUsers = new List<User>();
+        public List<Chat> chats = new List<Chat>();
+
 
         static void Main(string[] args)
         {
