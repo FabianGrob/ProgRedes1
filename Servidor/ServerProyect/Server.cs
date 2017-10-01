@@ -15,8 +15,8 @@ namespace ServerProyect
 
         public static IProtocol protocol = new Protocol();
         public static bool running = true;
-        public List<User> registeredUsers = new List<User>();
-        public List<Chat> chats = new List<Chat>();
+        public static List<User> registeredUsers = new List<User>();
+        public static List<Chat> chats = new List<Chat>();
         public static Object userLocker = new Object();
         public static Object locker2 = new Object();
 
@@ -61,11 +61,11 @@ namespace ServerProyect
         {
             try
             {
-                string message = protocol.ReceiveMessage(client);
+                string message = protocol.ReceiveData(client);
 
                 var information = message.Split('%');
                 int option = Convert.ToInt32(information[0]);
-                string name = "";
+                string name = information[1];
 
                 ProcessOption(option, name, client);
                 if (option != 4)
@@ -89,16 +89,16 @@ namespace ServerProyect
                     protocol.SendData(message, client);
                     break;
                 case 1:
-                    string userList = GetConnectedUsers();
-                    protocol.SendData(userList, client);
+                    string userList1 = GetConnectedUsers();
+                    protocol.SendData(userList1, client);
                     break;
                 case 2:
-                    string userList = GetFriends(userName);
-                    protocol.SendData(userList, client);
+                    string userList2 = GetFriends(userName);
+                    protocol.SendData(userList2, client);
                     break;
                 case 3:
-                    string userList = GetUsersToAdd(userName);
-                    protocol.SendDate(userList, client);
+                    string userList3 = GetUsersToAdd(userName);
+                    protocol.SendData(userList3, client);
                     string data = protocol.ReceiveData(client);
                     string response = SendFriendRequest(data);
                     protocol.SendData(response, client);
@@ -110,8 +110,8 @@ namespace ServerProyect
 
         private static string ReceiveUserData(Socket socketClient)
         {
-            var userName = protocol.ReceiveMessage(socketClient);
-            var password = protocol.ReceiveMessage(socketClient);
+            var userName = protocol.ReceiveData(socketClient);
+            var password = protocol.ReceiveData(socketClient);
 
             lock (userLocker)
             {
@@ -163,7 +163,7 @@ namespace ServerProyect
 
         }
 
-        public User GetUser(string userName)
+        public static User GetUser(string userName)
         {
             lock (userLocker)
             {
@@ -179,7 +179,7 @@ namespace ServerProyect
             }           
         }
 
-        public string GetConnectedUsers()
+        public static string GetConnectedUsers()
         {
             string users = "Los usuarios conectados son:#";
             int count = 1;
@@ -198,7 +198,7 @@ namespace ServerProyect
             
         }
 
-        public string GetFriends(string userName)
+        public static string GetFriends(string userName)
         {
             string users = "Tus amigos son:#";
             int count = 1;
@@ -214,7 +214,7 @@ namespace ServerProyect
             }
         }
 
-        public string GetUsersToAdd(string userName)
+        public static string GetUsersToAdd(string userName)
         {
             string users = "Los usuarios son:#";
             int count = 1;
@@ -232,7 +232,7 @@ namespace ServerProyect
             }
         }
 
-        public string SendFriendRequest(string data)
+        public static string SendFriendRequest(string data)
         {
             string[] splitedData = data.Split('%');
             User userToAdd = GetUser(splitedData[0]);
