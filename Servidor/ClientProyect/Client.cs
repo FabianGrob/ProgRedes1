@@ -109,8 +109,11 @@ namespace ClientProyect
                 case "REGISTERED":
                     Console.WriteLine("Usuario registrado");
                     return true;
-                case "ERROR":
-                    Console.WriteLine("Ese nombre de usuario ya se encuentra ocupado. Debe ingresar otro.");
+                case "DUPLICATED":
+                    Console.WriteLine("Este usuario ya esta conectado");
+                    return false;
+                case "PASSWORDERROR":
+                    Console.WriteLine("Contraseña incorrecta");
                     return false;
                 default:
                     return false;
@@ -167,14 +170,14 @@ namespace ClientProyect
                 case 3:
                     PrintUsers(message);                   
                     Console.WriteLine("Ingrese el nombre de usuario a agregar o '0' para volver al menu");
-                    string line = Console.ReadLine();
-                    if (line.Equals("0"))
+                    string line3 = Console.ReadLine();
+                    if (line3.Equals("0"))
                     {
                         break;
                     }
-                    SendName(line, client);
-                    string serverResponse = protocol.ReceiveData(client);
-                    switch (serverResponse)
+                    SendName(line3, client);
+                    string serverResponse3 = protocol.ReceiveData(client);
+                    switch (serverResponse3)
                     {
                         case "WRONGNAME":
                             Console.WriteLine("El usuario no existe.");
@@ -195,12 +198,50 @@ namespace ClientProyect
                     }
                     break;
                 case 4:
-                    keepConnection = false;
+                    PrintUsers(message);
+                    Console.WriteLine("Escriba el nombre del usuario al que quiere responder la solicitud '0' para volver:");
+                    string line4 = Console.ReadLine();
+                    if (line4.Equals("0"))
+                    {
+                        break;
+                    }
+                    SendName(line4, client);
+                    string serverResponse4 = protocol.ReceiveData(client);
+                    switch (serverResponse4)
+                    {
+                        case "WRONGNAME":
+                            Console.WriteLine("El usuario no existe.");
+                            ProcessOption(message, client, option);
+                            break;
+
+                        case "OK":
+                            Console.WriteLine("Ingrese '1' para aceptar, '2' para rechazar o '0' para volver atras.");
+                            line4 = Console.ReadLine();
+                            option = Convert.ToInt32(line4);
+
+                            while (!(option <= 2 && option >= 0))
+                            {
+                                Console.WriteLine("Opcion no valida, seleccione una opcion correcta");
+                                line4 = Console.ReadLine();
+                                option = Convert.ToInt32(line4);
+                            }
+
+                            if (option == 0)
+                            {
+                                break;
+                            }
+
+                            SendOption(option, client);
+                            string response = protocol.ReceiveData(client);
+                            Console.WriteLine(response);
+                            break;
+                    }
                     break;
                 case 5:
                     keepConnection = false;
                     break;
                 case 6:
+                    SendOption(6, client);
                     keepConnection = false;
                     break;
 

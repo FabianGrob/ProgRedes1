@@ -38,7 +38,7 @@ namespace ServerProyect
                 server.Bind(localServerEndpoint);
                 server.Listen(10);
                 Console.WriteLine("Esperando cliente...");
-                
+
                 while (running)
                 {
                     Socket client = server.Accept();
@@ -54,7 +54,7 @@ namespace ServerProyect
             {
                 Console.WriteLine("Imposible conectar");
             }
-            
+
         }
 
         static void ClientThread(Socket client)
@@ -68,7 +68,7 @@ namespace ServerProyect
                 string name = information[1];
 
                 ProcessOption(option, name, client);
-                if (option != 4)
+                if (option != 6)
                 {
                     ClientThread(client);
                 }
@@ -83,7 +83,7 @@ namespace ServerProyect
         {
             switch (option)
             {
-                case 0:                   
+                case 0:
                     string message = "ERROR";
                     message = ReceiveUserData(client);
                     protocol.SendData(message, client);
@@ -103,7 +103,22 @@ namespace ServerProyect
                     string response = SendFriendRequest(data);
                     protocol.SendData(response, client);
                     break;
-                case 4:                    
+                case 4:
+                    string userList4 = GetPendingFriends(userName);
+                    protocol.SendData(userList4, client);
+                    string data = protocol.ReceiveData(client);
+                    string nameCheck = CheckNameOnPendingRequests(data);
+                    protocol.SendData(nameCheck, client);
+                    string userDecision = protocol.ReceiveData(client);
+                    string finalMessage = FriendRequestProcess(data, userDecision);
+                    protocol.SendData(finalMessage, cliente);
+                    break;
+
+                case 5:
+
+                    break;
+                case 6:
+                    Disconnect(userName);
                     break;
             }
         }
@@ -133,7 +148,7 @@ namespace ServerProyect
                     if (user.Connected)
                     {
                         Console.WriteLine("Conexion duplicada");
-                        return "ERROR";
+                        return "DUPLICATED";
                     }
                     else
                     {
@@ -147,10 +162,10 @@ namespace ServerProyect
                         else
                         {
                             Console.WriteLine("Autentificación incorrecta!");
-                            return "ERROR";
+                            return "PASSWORDERROR";
                         }
                     }
-                                       
+
                 }
                 else
                 {
@@ -176,7 +191,7 @@ namespace ServerProyect
 
                 }
                 return null;
-            }           
+            }
         }
 
         public static string GetConnectedUsers()
@@ -195,7 +210,7 @@ namespace ServerProyect
                 }
                 return users;
             }
-            
+
         }
 
         public static string GetFriends(string userName)
@@ -266,12 +281,94 @@ namespace ServerProyect
                                 return "REQUESTSENT";
                             }
                         }
-                    }                   
+                    }
                 }
             }
             else
             {
                 return "WRONGNAME";
+            }
+        }
+
+        public static string GetPendingFriends(string userName)
+        {
+            string users = "Solicitudes pendientes:#";
+            int count = 1;
+            User activeUser = GetUser(userName);
+            lock (userLocker)
+            {
+                foreach (User user in activeUser.PendingFriends)
+                {
+                    users = (users + $"{count}. {user.UserName}#");
+                    count++;
+                }
+                return users;
+            }
+        }
+
+        public static string CheckNameOnPendingRequests(string data)
+        {
+            string[] splitedData = data.Split('%');
+            User activeUser = GetUser(splitedData[1]);
+            User userToCheck = GetUser(splitedData[0]);
+
+            if (userToCheck == null)
+            {
+                return "WRONGNAME";
+            }
+            else
+            {
+                lock (userLocker)
+                {
+                    if (activeUser.PendingFriends.Contains(userToCheck))
+                    {
+                        return "OK";
+                    }
+                    else
+                    {
+                        return "WRONGNAME";
+                    }
+                }
+            }
+        }
+
+        public static string FriendRequestProcess(string data, string userDecision)
+        {
+            string[] splitedData = data.Split('%');
+            string[] splitedUserDecision = userDecision.Split('%');
+            User activeUser = GetUser(splitedData[1]);
+            User userToAccept = GetUser(splitedData[0]);
+
+            lock (userLocker)
+            {
+                if (splitedUserDecision[0].Equals("1"))
+                {
+
+                    activeUser.PendingFriends.Remove(userToAccept);
+                    activeUser.Friends.Add(userToAccept);
+                    userToAccept.Friends.Add(activeUser);
+                    Console.WriteLine($"{activeUser.UserName} acepto la solicitud de {userToAccept.UserName}");
+                    return $"Ahora tu y {userToAccept.UserName} son amigos.";
+
+                }
+                else
+                {
+
+                    activeUser.PendingFriends.Remove(userToAccept);
+                    Console.WriteLine($"{activeUser.UserName} rechazo la solicitud de {userToAccept.UserName}");
+                    return "Solicitud rechazada.";
+
+                }
+            }
+            
+        }
+
+        public static void Disconnect(string userName)
+        {
+            User user = GetUser(userName);
+            lock (userLocker)
+            {
+                user.Connected = false;
             }
         }
     }
