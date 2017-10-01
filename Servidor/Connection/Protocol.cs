@@ -35,7 +35,7 @@ namespace Connection
             int length = data.Length;
             var lengthBinary = BitConverter.GetBytes(length);
 
-            var toSend = new byte[data.Length + lengthBinary.Length];
+            byte[] toSend = new byte[data.Length + lengthBinary.Length];
 
             lengthBinary.CopyTo(toSend, 0);
             data.CopyTo(toSend, lengthBinary.Length);
