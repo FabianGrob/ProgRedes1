@@ -7,12 +7,14 @@ using System.Net.Sockets;
 using System.Net;
 using System.Configuration;
 using System.Threading;
+using Connection;
 
 namespace ClientProyect
 {
-    public class Client
+    public class Client 
     {
 
+        public static IProtocol protocol = new Protocol();
         public static bool connectedToServer = false;
         public static bool userLogedIn = false;
 

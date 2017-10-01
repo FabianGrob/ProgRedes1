@@ -51,6 +51,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Connection\Connection.csproj">
+      <Project>{fe7a23f6-2e26-4459-9bfe-840a272aec67}</Project>
+      <Name>Connection</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Domain\Domain.csproj">
       <Project>{80e5a853-dddf-4c3e-89c7-1116ef747f96}</Project>
       <Name>Domain</Name>

@@ -8,12 +8,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Domain;
+using Connection;
 
 namespace ServerProyect
 {
     public class Server
     {
 
+        public static IProtocol protocol = new Protocol();
         public static bool running = true;
         public List<User> registeredUsers = new List<User>();
         public List<Chat> chats = new List<Chat>();
