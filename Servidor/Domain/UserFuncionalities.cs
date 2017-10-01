@@ -26,22 +26,7 @@ namespace Domain
         {
             User.PendingFriends.Add(anUser);
         }
-        public ValidReturn SendRequest(User anUser)
-        {
-            ValidReturn valid = new ValidReturn(true, "Request sent");
-            if (User.Friends.Contains(anUser))
-            {
-                valid.ReAssign(false, "You are already friends!");
-            }
-            if (User.PendingFriends.Contains(anUser))
-            {
-                AddFriend(anUser);
-                User.PendingFriends.Remove(anUser);
-                anUser.Friends.Add(User);
-                valid.ReAssign(true, "You are are now friends!");
-            }
-            return valid;
-        }
+
         public void ShowRequests()
         {
             Console.WriteLine("Your friend solicitudes: ");
