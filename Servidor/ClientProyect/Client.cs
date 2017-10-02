@@ -32,6 +32,7 @@ namespace ClientProyect
         private static void ClientStart()
         {
             TcpClient clientSocket = new TcpClient();
+            NetworkStream clientStream = default(NetworkStream);
             //Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
             {
@@ -46,7 +47,7 @@ namespace ClientProyect
                 //client.Connect(IPAddress.Parse(serverIP), serverPort);
 
                 clientSocket.Connect(serverIP, port);
-                NetworkStream clientStream = clientSocket.GetStream();
+                clientStream = clientSocket.GetStream();
                 
                 connectedToServer = true;
             }
@@ -97,7 +98,7 @@ namespace ClientProyect
                     ProcessOption(message, clientStream, option);
                 }
 
-                clientStream.Shutdown(SocketShutdown.Both);
+                //clientStream.Shutdown(SocketShutdown.Both);
                 clientStream.Close();
                 Console.ReadLine();
             }
