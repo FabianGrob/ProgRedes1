@@ -18,7 +18,7 @@ namespace ServerProyect
         public static List<User> registeredUsers = new List<User>();
         public static List<Chat> chats = new List<Chat>();
         public static Object userLocker = new Object();
-        public static Object locker2 = new Object();
+        public static Object chatsLocker = new Object();
 
 
         static void Main(string[] args)
@@ -109,13 +109,25 @@ namespace ServerProyect
                     string data4 = protocol.ReceiveData(client);
                     string nameCheck = CheckNameOnPendingRequests(data4);
                     protocol.SendData(nameCheck, client);
-                    string userDecision = protocol.ReceiveData(client);
-                    string finalMessage = FriendRequestProcess(data4, userDecision);
-                    protocol.SendData(finalMessage, client);
+                    if (nameCheck.Equals("OK"))
+                    {
+                        string userDecision = protocol.ReceiveData(client);
+                        string finalMessage = FriendRequestProcess(data4, userDecision);
+                        protocol.SendData(finalMessage, client);
+                    }
                     break;
 
                 case 5:
+                    string userList5 = GetFriends(userName);
+                    protocol.SendData(userList5, client);
+                    string userNames = protocol.ReceiveData(client);
+                    string isAFriend = CheckNameIsAFriend(userNames);
+                    protocol.SendData(isAFriend, client);
+                    if (isAFriend.Equals("OK"))
+                    {
+                        Chat aChat = startChat(userNames);
 
+                    }
                     break;
                 case 6:
                     Disconnect(userName);
@@ -333,6 +345,31 @@ namespace ServerProyect
                 }
             }
         }
+        public static string CheckNameIsAFriend(string data)
+        {
+            string[] splitedData = data.Split('%');
+            User activeUser = GetUser(splitedData[1]);
+            User userToCheck = GetUser(splitedData[0]);
+            if (userToCheck == null)
+            {
+                return "WRONGNAME";
+            }
+            else
+            {
+                lock (userLocker)
+                {
+                    if (activeUser.Friends.Contains(userToCheck))
+                    {
+                        return "OK";
+                    }
+                    else
+                    {
+                        return "WRONGNAME";
+                    }
+                }
+            }
+
+        }
 
         public static string FriendRequestProcess(string data, string userDecision)
         {
@@ -362,7 +399,7 @@ namespace ServerProyect
 
                 }
             }
-            
+
         }
 
         public static void Disconnect(string userName)
@@ -371,6 +408,49 @@ namespace ServerProyect
             lock (userLocker)
             {
                 user.Connected = false;
+            }
+        }
+        public static Chat startChat(string UserNames)
+        {
+            lock (chatsLocker)
+            {
+                string[] splitedData = UserNames.Split('%');
+                User activeUser = GetUser(splitedData[1]);
+                User userToChat = GetUser(splitedData[0]);
+                Chat newChat = new Chat
+                {
+                    User1 = activeUser,
+                    User2 = userToChat,
+                    Messages = new List<Message>()
+                };
+                return GetChat(newChat);
+            }
+        }
+        private static Chat GetChat(Chat newChat)
+        {
+            lock (chatsLocker)
+            {
+                foreach (Chat aChat in chats)
+                {
+                    if (newChat.Equals(aChat))
+                    {
+                        return aChat;
+                    }
+                }
+                chats.Add(newChat);
+                return newChat;
+            }
+        }
+        public static string GetChatMessages(Chat aChat)
+        {
+            string messagesToShow = "";
+            lock (chatsLocker)
+            {
+                foreach (Message message in aChat.Messages)
+                {
+                    messagesToShow = (messagesToShow + "#" + message.User.UserName + " dice: " + message.Line);
+                }
+                return messagesToShow;
             }
         }
     }

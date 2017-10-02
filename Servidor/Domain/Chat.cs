@@ -28,5 +28,21 @@ namespace Domain
             }
             return added;
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+            {
+                return false;
+            }
+            else if (this.GetType() != obj.GetType())
+            {
+                return false;
+            }
+            else
+            {
+                return ((User1.Equals(((Chat)obj).User1)) && (User2.Equals(((Chat)obj).User2)) || (User1.Equals(((Chat)obj).User2)) && (User2.Equals(((Chat)obj).User1)));
+            }
+        }
     }
 }

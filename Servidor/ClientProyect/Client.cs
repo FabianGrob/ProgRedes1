@@ -238,7 +238,26 @@ namespace ClientProyect
                     }
                     break;
                 case 5:
-                    keepConnection = false;
+                    PrintUsers(message);
+                    Console.WriteLine("Escriba el nombre del usuario con el que quiere abrir un chat o '0' para volver atras.");
+                    string line5 = Console.ReadLine();
+                    if (line5.Equals("0"))
+                    {
+                        break;
+                    }
+                    SendName(line5, client);
+                    string serverResponse5 = protocol.ReceiveData(client);
+                    switch (serverResponse5)
+                    {
+                        case "WRONGNAME":
+                            Console.WriteLine("El usuario no existe o no es amigo tuyo.");
+                            ProcessOption(message, client, option);
+                            break;
+
+                        case "OK":
+                          
+                            break;
+                    }
                     break;
                 case 6:
                     keepConnection = false;
