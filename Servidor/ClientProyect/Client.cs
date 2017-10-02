@@ -133,12 +133,12 @@ namespace ClientProyect
             Console.WriteLine("Seleccione la opcion que desea realizar");
 
             string line = Console.ReadLine();
-            int option = Convert.ToInt32(line);
-            while (!(option <= 6 && option > 0))
+            int option = convertToInt(line);
+            while (!(option <= 6 && option > 0) || !IsValidOption(line))
             {
                 Console.WriteLine("Opcion no valida, seleccione una opcion correcta");
                 line = Console.ReadLine();
-                option = Convert.ToInt32(line);
+                option = convertToInt(line);
             }
             return option;
         }
@@ -168,7 +168,7 @@ namespace ClientProyect
                     PrintUsers(message);
                     break;
                 case 3:
-                    PrintUsers(message);                   
+                    PrintUsers(message);
                     Console.WriteLine("Ingrese el nombre de usuario a agregar o '0' para volver al menu");
                     string line3 = Console.ReadLine();
                     if (line3.Equals("0"))
@@ -241,14 +241,14 @@ namespace ClientProyect
                     keepConnection = false;
                     break;
                 case 6:
-                    SendOption(6, client);
                     keepConnection = false;
+                    Console.WriteLine(message);
                     break;
 
             }
         }
 
-        
+
 
         private static void PrintUsers(string message)
         {
@@ -258,6 +258,31 @@ namespace ClientProyect
                 Console.WriteLine(names[i]);
             }
 
+        }
+        public static bool IsValidOption(string word)
+        {
+            if (!(word.Length == 1))
+            {
+                return false;
+            }
+            string options = "123456";
+            if (options.Contains(word))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static int convertToInt(string line)
+        {
+            if (IsValidOption(line))
+            {
+                return Convert.ToInt32(line);
+            }
+            else
+            {
+                return 1000;
+            }
         }
     }
 }

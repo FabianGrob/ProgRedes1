@@ -99,19 +99,19 @@ namespace ServerProyect
                 case 3:
                     string userList3 = GetUsersToAdd(userName);
                     protocol.SendData(userList3, client);
-                    string data = protocol.ReceiveData(client);
-                    string response = SendFriendRequest(data);
+                    string data3 = protocol.ReceiveData(client);
+                    string response = SendFriendRequest(data3);
                     protocol.SendData(response, client);
                     break;
                 case 4:
                     string userList4 = GetPendingFriends(userName);
                     protocol.SendData(userList4, client);
-                    string data = protocol.ReceiveData(client);
-                    string nameCheck = CheckNameOnPendingRequests(data);
+                    string data4 = protocol.ReceiveData(client);
+                    string nameCheck = CheckNameOnPendingRequests(data4);
                     protocol.SendData(nameCheck, client);
                     string userDecision = protocol.ReceiveData(client);
-                    string finalMessage = FriendRequestProcess(data, userDecision);
-                    protocol.SendData(finalMessage, cliente);
+                    string finalMessage = FriendRequestProcess(data4, userDecision);
+                    protocol.SendData(finalMessage, client);
                     break;
 
                 case 5:
@@ -119,6 +119,8 @@ namespace ServerProyect
                     break;
                 case 6:
                     Disconnect(userName);
+                    Console.WriteLine("Desconectado " + userName);
+                    protocol.SendData("Desconectado con exito", client);
                     break;
             }
         }
