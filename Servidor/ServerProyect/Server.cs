@@ -19,6 +19,7 @@ namespace ServerProyect
         public static List<Chat> chats = new List<Chat>();
         public static Object userLocker = new Object();
         public static Object chatsLocker = new Object();
+        public static Hashtable clientsList = new Hashtable();
 
 
         static void Main(string[] args)
@@ -28,25 +29,35 @@ namespace ServerProyect
 
         private static void ServerStart()
         {
+            string serverIP = ConfigurationManager.AppSettings["serverIP"];
+
+            int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
+            TcpListener serverSocket = new TcpListener(serverPort);
+            TcpClient clientSocket = default(TcpClient);
+
             try
             {
-                string serverIP = ConfigurationManager.AppSettings["serverIP"];
-                int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
-
-                Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                IPEndPoint localServerEndpoint = new IPEndPoint(IPAddress.Parse(serverIP), serverPort);
-                server.Bind(localServerEndpoint);
-                server.Listen(10);
+                serverSocket.Start();
                 Console.WriteLine("Esperando cliente...");
 
+                //Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                //IPEndPoint localServerEndpoint = new IPEndPoint(IPAddress.Parse(serverIP), serverPort);
+                //server.Bind(localServerEndpoint);
+                //server.Listen(10);
+                //Console.WriteLine("Esperando cliente...");
+
                 while (running)
-                {
-                    Socket client = server.Accept();
+                {                    
+                    clientSocket = serverSocket.AcceptTcpClient();
+                    NetworkStream networkStream = clientSocket.GetStream();
+
+                    //Socket client = server.Accept();
                     Console.WriteLine("Cliente conectado con éxito!");
-                    Thread clientTrhead = new Thread(() => ClientThread(client));
+                    Thread clientTrhead = new Thread(() => ClientThread(clientSocket));
                     clientTrhead.Start();
                 }
-                server.Close();
+                clientSocket.Close();
+                serverSocket.Stop();
                 Console.WriteLine("Server finished");
                 Console.ReadLine();
             }
@@ -57,7 +68,7 @@ namespace ServerProyect
 
         }
 
-        static void ClientThread(Socket client)
+        static void ClientThread(TcpClient client)
         {
             try
             {
@@ -126,7 +137,6 @@ namespace ServerProyect
                     if (isAFriend.Equals("OK"))
                     {
                         Chat aChat = startChat(userNames);
-
                     }
                     break;
                 case 6:

@@ -14,22 +14,25 @@ namespace Connection
 
         }
 
-        public string ReceiveData(NetworkStream socket)
+        public string ReceiveData(TcpClient socket)
         {
             byte[] dataLength = new byte[4];
-            socket.Read(dataLength, 0 , dataLength.Length-1);
+            NetworkStream stream = socket.GetStream();
+            stream.Read(dataLength, 0 , dataLength.Length-1);
 
             int length = BitConverter.ToInt32(dataLength, 0);
             byte[] bytesMessage = new byte[length];
-            socket.Read(bytesMessage,dataLength.Length, bytesMessage.Length-1);
+            stream.Read(bytesMessage,dataLength.Length, bytesMessage.Length-1);
 
             string message = Encoding.ASCII.GetString(bytesMessage);
 
             return message;
         }
 
-        public void SendData(string message, NetworkStream socket)
+        public void SendData(string message, TcpClient socket)
         {
+            NetworkStream stream = socket.GetStream();
+
             byte[] data = Encoding.ASCII.GetBytes(message);
 
             int length = data.Length;
@@ -43,7 +46,7 @@ namespace Connection
             int sent = 0;
             while (sent < toSend.Length)
             {
-                socket.WriteAsync(toSend, sent, sent);
+                stream.WriteAsync(toSend, sent, sent);
             }
         }
     }
