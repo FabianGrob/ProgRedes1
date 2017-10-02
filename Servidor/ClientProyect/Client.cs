@@ -19,6 +19,8 @@ namespace ClientProyect
         public static bool userLogedIn = false;
         public static bool keepConnection = true;
         public static string user = null;
+        public static bool chating = false;
+
 
 
         static void Main(string[] args)
@@ -29,7 +31,8 @@ namespace ClientProyect
 
         private static void ClientStart()
         {
-            Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            TcpClient clientSocket = new TcpClient();
+            //Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
             {
                 string clientIP = ConfigurationManager.AppSettings["clientIP"];
@@ -39,12 +42,15 @@ namespace ClientProyect
                 int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
                 string serverIP = ConfigurationManager.AppSettings["serverIP"];
 
-                client.Bind(new IPEndPoint(IPAddress.Parse(clientIP), port));
-                client.Connect(IPAddress.Parse(serverIP), serverPort);
+                //client.Bind(new IPEndPoint(IPAddress.Parse(clientIP), port));
+                //client.Connect(IPAddress.Parse(serverIP), serverPort);
 
+                clientSocket.Connect(serverIP, port);
+                NetworkStream clientStream = clientSocket.GetStream();
+                
                 connectedToServer = true;
             }
-            catch (SocketException)
+            catch (Exception)
             {
                 Console.WriteLine("Error. Imposible conectar");
                 Thread.Sleep(2000);
@@ -70,11 +76,11 @@ namespace ClientProyect
                         Console.WriteLine("Ingrese su contraseña: ");
                         password = Console.ReadLine();
                     }
-                    SendOption(0, client);
+                    SendOption(0, clientStream);
 
-                    protocol.SendData(userName, client);
-                    protocol.SendData(password, client);
-                    userLogedIn = ReceiveConectionAccess(client);
+                    protocol.SendData(userName, clientStream);
+                    protocol.SendData(password, clientStream);
+                    userLogedIn = ReceiveConectionAccess(clientStream);
 
                     if (userLogedIn)
                     {
@@ -86,18 +92,18 @@ namespace ClientProyect
                 while (keepConnection)
                 {
                     int option = MainMenu();
-                    SendOption(option, client);
-                    string message = protocol.ReceiveData(client);
-                    ProcessOption(message, client, option);
+                    SendOption(option, clientStream);
+                    string message = protocol.ReceiveData(clientStream);
+                    ProcessOption(message, clientStream, option);
                 }
 
-                client.Shutdown(SocketShutdown.Both);
-                client.Close();
+                clientStream.Shutdown(SocketShutdown.Both);
+                clientStream.Close();
                 Console.ReadLine();
             }
         }
 
-        private static bool ReceiveConectionAccess(Socket socket)
+        private static bool ReceiveConectionAccess(NetworkStream socket)
         {
             var message = protocol.ReceiveData(socket);
 
@@ -143,21 +149,21 @@ namespace ClientProyect
             return option;
         }
 
-        private static void SendOption(int option, Socket client)
+        private static void SendOption(int option, NetworkStream clientStream)
         {
             string information = option + "%" + user;
 
-            protocol.SendData(information, client);
+            protocol.SendData(information, clientStream);
         }
 
-        private static void SendName(string name, Socket client)
+        private static void SendName(string name, NetworkStream clientStream)
         {
             string information = name + "%" + user;
 
-            protocol.SendData(information, client);
+            protocol.SendData(information, clientStream);
         }
 
-        private static void ProcessOption(string message, Socket client, int option)
+        private static void ProcessOption(string message, NetworkStream clientStream, int option)
         {
             switch (option)
             {
@@ -175,13 +181,13 @@ namespace ClientProyect
                     {
                         break;
                     }
-                    SendName(line3, client);
-                    string serverResponse3 = protocol.ReceiveData(client);
+                    SendName(line3, clientStream);
+                    string serverResponse3 = protocol.ReceiveData(clientStream);
                     switch (serverResponse3)
                     {
                         case "WRONGNAME":
                             Console.WriteLine("El usuario no existe.");
-                            ProcessOption(message, client, option);
+                            ProcessOption(message, clientStream, option);
                             break;
 
                         case "ALREADYADDED":
@@ -205,13 +211,13 @@ namespace ClientProyect
                     {
                         break;
                     }
-                    SendName(line4, client);
-                    string serverResponse4 = protocol.ReceiveData(client);
+                    SendName(line4, clientStream);
+                    string serverResponse4 = protocol.ReceiveData(clientStream);
                     switch (serverResponse4)
                     {
                         case "WRONGNAME":
                             Console.WriteLine("El usuario no existe.");
-                            ProcessOption(message, client, option);
+                            ProcessOption(message, clientStream, option);
                             break;
 
                         case "OK":
@@ -231,8 +237,8 @@ namespace ClientProyect
                                 break;
                             }
 
-                            SendOption(option, client);
-                            string response = protocol.ReceiveData(client);
+                            SendOption(option, clientStream);
+                            string response = protocol.ReceiveData(clientStream);
                             Console.WriteLine(response);
                             break;
                     }
@@ -245,17 +251,17 @@ namespace ClientProyect
                     {
                         break;
                     }
-                    SendName(line5, client);
-                    string serverResponse5 = protocol.ReceiveData(client);
+                    SendName(line5, clientStream);
+                    string serverResponse5 = protocol.ReceiveData(clientStream);
                     switch (serverResponse5)
                     {
                         case "WRONGNAME":
                             Console.WriteLine("El usuario no existe o no es amigo tuyo.");
-                            ProcessOption(message, client, option);
+                            ProcessOption(message, clientStream, option);
                             break;
 
                         case "OK":
-                          
+
                             break;
                     }
                     break;
