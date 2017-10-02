@@ -38,20 +38,18 @@ namespace ClientProyect
             {
                 string clientIP = ConfigurationManager.AppSettings["clientIP"];
                 Random randomValue = new Random();
-                int port = randomValue.Next(6001, 6500);
-
+                int port = 8888;
                 int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
                 string serverIP = ConfigurationManager.AppSettings["serverIP"];
 
                 //client.Bind(new IPEndPoint(IPAddress.Parse(clientIP), port));
                 //client.Connect(IPAddress.Parse(serverIP), serverPort);
-
                 clientSocket.Connect(serverIP, port);
                 clientStream = clientSocket.GetStream();
                 
                 connectedToServer = true;
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 Console.WriteLine("Error. Imposible conectar");
                 Thread.Sleep(2000);
@@ -64,6 +62,8 @@ namespace ClientProyect
                 Console.WriteLine("Ingrese su nombre de usuario: ");
                 while (!userLogedIn)
                 {
+                    SendOption(0, clientSocket);
+
                     string userName = Console.ReadLine();
                     while (userName.Equals(""))
                     {
@@ -77,10 +77,11 @@ namespace ClientProyect
                         Console.WriteLine("Ingrese su contraseña: ");
                         password = Console.ReadLine();
                     }
-                    SendOption(0, clientSocket);
 
-                    protocol.SendData(userName, clientSocket);
-                    protocol.SendData(password, clientSocket);
+                    string userPass = $"{userName}#{password}";
+
+                    
+                    protocol.SendData(userPass, clientSocket);
                     userLogedIn = ReceiveConectionAccess(clientSocket);
 
                     if (userLogedIn)
@@ -180,6 +181,8 @@ namespace ClientProyect
                     string line3 = Console.ReadLine();
                     if (line3.Equals("0"))
                     {
+                        SendName(line3, clientSocket);
+                        protocol.ReceiveData(clientSocket);
                         break;
                     }
                     SendName(line3, clientSocket);
@@ -188,7 +191,6 @@ namespace ClientProyect
                     {
                         case "WRONGNAME":
                             Console.WriteLine("El usuario no existe.");
-                            ProcessOption(message, clientSocket, option);
                             break;
 
                         case "ALREADYADDED":
@@ -210,6 +212,8 @@ namespace ClientProyect
                     string line4 = Console.ReadLine();
                     if (line4.Equals("0"))
                     {
+                        SendName(line4, clientSocket);
+                        protocol.ReceiveData(clientSocket);
                         break;
                     }
                     SendName(line4, clientSocket);
@@ -218,7 +222,6 @@ namespace ClientProyect
                     {
                         case "WRONGNAME":
                             Console.WriteLine("El usuario no existe.");
-                            ProcessOption(message, clientSocket, option);
                             break;
 
                         case "OK":
@@ -235,6 +238,8 @@ namespace ClientProyect
 
                             if (option == 0)
                             {
+                                SendOption(option, clientSocket);
+                                protocol.ReceiveData(clientSocket);
                                 break;
                             }
 
@@ -250,6 +255,8 @@ namespace ClientProyect
                     string line5 = Console.ReadLine();
                     if (line5.Equals("0"))
                     {
+                        SendName(line5, clientSocket);
+                        protocol.ReceiveData(clientSocket);
                         break;
                     }
                     SendName(line5, clientSocket);

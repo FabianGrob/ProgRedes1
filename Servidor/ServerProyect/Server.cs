@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Connection;
 using Domain;
+using System.Collections;
 
 namespace ServerProyect
 {
@@ -32,7 +33,7 @@ namespace ServerProyect
             string serverIP = ConfigurationManager.AppSettings["serverIP"];
 
             int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
-            TcpListener serverSocket = new TcpListener(serverPort);
+            TcpListener serverSocket = new TcpListener(IPAddress.Parse(serverIP), serverPort);
             TcpClient clientSocket = default(TcpClient);
 
             try
@@ -47,7 +48,7 @@ namespace ServerProyect
                 //Console.WriteLine("Esperando cliente...");
 
                 while (running)
-                {                    
+                {
                     clientSocket = serverSocket.AcceptTcpClient();
                     NetworkStream networkStream = clientSocket.GetStream();
 
@@ -72,6 +73,7 @@ namespace ServerProyect
         {
             try
             {
+                protocol.SendData("$", client);
                 string message = protocol.ReceiveData(client);
 
                 var information = message.Split('%');
@@ -90,7 +92,7 @@ namespace ServerProyect
             }
         }
 
-        public static void ProcessOption(int option, string userName, Socket client)
+        public static void ProcessOption(int option, string userName, TcpClient client)
         {
             switch (option)
             {
@@ -147,10 +149,13 @@ namespace ServerProyect
             }
         }
 
-        private static string ReceiveUserData(Socket socketClient)
+        private static string ReceiveUserData(TcpClient socketClient)
         {
-            var userName = protocol.ReceiveData(socketClient);
-            var password = protocol.ReceiveData(socketClient);
+            var userPass = protocol.ReceiveData(socketClient);
+            string[] userData = userPass.Split('#');
+            string userName = userData[0];
+            string password = userData[1];
+
 
             lock (userLocker)
             {

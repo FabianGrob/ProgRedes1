@@ -11,22 +11,36 @@ namespace Connection
     {
         public Protocol()
         {
-
         }
 
         public string ReceiveData(TcpClient socket)
         {
-            byte[] dataLength = new byte[4];
             NetworkStream stream = socket.GetStream();
-            stream.Read(dataLength, 0 , dataLength.Length-1);
-
+            byte[] dataLength = new byte[10025];
+            stream.Read(dataLength, 0, 4);
             int length = BitConverter.ToInt32(dataLength, 0);
             byte[] bytesMessage = new byte[length];
-            stream.Read(bytesMessage,dataLength.Length, bytesMessage.Length-1);
+            stream.Read(bytesMessage, 0, length);
 
             string message = Encoding.ASCII.GetString(bytesMessage);
 
+            while (message.Equals("$"))
+            {
+                message = ReceiveData(socket);
+            }
+            SendData("$", socket);
             return message;
+            //byte[] dataLength = new byte[4];
+            //stream.Read(dataLength, 0, dataLength.Length);
+            //bool a = stream.DataAvailable;
+            //int length = BitConverter.ToInt32(dataLength, 0);
+            //byte[] bytesMessage = new byte[length];
+            //stream.Read(bytesMessage, dataLength.Length, bytesMessage.Length + dataLength.Length);
+
+            //string message = Encoding.ASCII.GetString(bytesMessage);
+
+            //return message;
+
         }
 
         public void SendData(string message, TcpClient socket)
@@ -43,11 +57,9 @@ namespace Connection
             lengthBinary.CopyTo(toSend, 0);
             data.CopyTo(toSend, lengthBinary.Length);
 
-            int sent = 0;
-            while (sent < toSend.Length)
-            {
-                stream.WriteAsync(toSend, sent, sent);
-            }
+
+            stream.Write(toSend, 0, toSend.Length);
+
         }
     }
 }
