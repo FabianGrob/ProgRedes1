@@ -15,6 +15,7 @@ namespace Domain
         public List<User> PendingFriends { get; set; }
         public int Connections { get; set; }
         public DateTime ConnectedSince { get; set; }
+        public string ChatingWith { get; set; }
 
         public User()
         {            

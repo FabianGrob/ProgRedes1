@@ -9,7 +9,7 @@ namespace Connection
 {
     public interface IProtocol
     {
-        string ReceiveData(TcpClient socket);
+        string RecieveData(TcpClient socket);
         void SendData(string message, TcpClient socket);
     }
 }

@@ -19,21 +19,19 @@ namespace ClientProyect
         public static bool userLogedIn = false;
         public static bool keepConnection = true;
         public static string user = null;
-        public static bool chating = false;
-
-
+        public static bool finishChat = false;
 
         static void Main(string[] args)
         {
             ClientStart();
-
         }
+
+        private static TcpClient clientSocket = new TcpClient();
+        private static NetworkStream clientStream = default(NetworkStream);
 
         private static void ClientStart()
         {
-            TcpClient clientSocket = new TcpClient();
-            NetworkStream clientStream = default(NetworkStream); 
-            //Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
             try
             {
                 string clientIP = ConfigurationManager.AppSettings["clientIP"];
@@ -41,15 +39,13 @@ namespace ClientProyect
                 int port = 8888;
                 int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
                 string serverIP = ConfigurationManager.AppSettings["serverIP"];
-
-                //client.Bind(new IPEndPoint(IPAddress.Parse(clientIP), port));
-                //client.Connect(IPAddress.Parse(serverIP), serverPort);
+                ;
                 clientSocket.Connect(serverIP, port);
                 clientStream = clientSocket.GetStream();
-                
+
                 connectedToServer = true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine("Error. Imposible conectar");
                 Thread.Sleep(2000);
@@ -80,7 +76,7 @@ namespace ClientProyect
 
                     string userPass = $"{userName}#{password}";
 
-                    
+
                     protocol.SendData(userPass, clientSocket);
                     userLogedIn = ReceiveConectionAccess(clientSocket);
 
@@ -95,11 +91,10 @@ namespace ClientProyect
                 {
                     int option = MainMenu();
                     SendOption(option, clientSocket);
-                    string message = protocol.ReceiveData(clientSocket);
+                    string message = protocol.RecieveData(clientSocket);
                     ProcessOption(message, clientSocket, option);
                 }
 
-                //clientStream.Shutdown(SocketShutdown.Both);
                 clientStream.Close();
                 Console.ReadLine();
             }
@@ -107,7 +102,7 @@ namespace ClientProyect
 
         private static bool ReceiveConectionAccess(TcpClient socket)
         {
-            var message = protocol.ReceiveData(socket);
+            var message = protocol.RecieveData(socket);
 
             switch (message)
             {
@@ -182,11 +177,11 @@ namespace ClientProyect
                     if (line3.Equals("0"))
                     {
                         SendName(line3, clientSocket);
-                        protocol.ReceiveData(clientSocket);
+                        protocol.RecieveData(clientSocket);
                         break;
                     }
                     SendName(line3, clientSocket);
-                    string serverResponse3 = protocol.ReceiveData(clientSocket);
+                    string serverResponse3 = protocol.RecieveData(clientSocket);
                     switch (serverResponse3)
                     {
                         case "WRONGNAME":
@@ -213,11 +208,11 @@ namespace ClientProyect
                     if (line4.Equals("0"))
                     {
                         SendName(line4, clientSocket);
-                        protocol.ReceiveData(clientSocket);
+                        protocol.RecieveData(clientSocket);
                         break;
                     }
                     SendName(line4, clientSocket);
-                    string serverResponse4 = protocol.ReceiveData(clientSocket);
+                    string serverResponse4 = protocol.RecieveData(clientSocket);
                     switch (serverResponse4)
                     {
                         case "WRONGNAME":
@@ -239,12 +234,12 @@ namespace ClientProyect
                             if (option == 0)
                             {
                                 SendOption(option, clientSocket);
-                                protocol.ReceiveData(clientSocket);
+                                protocol.RecieveData(clientSocket);
                                 break;
                             }
 
                             SendOption(option, clientSocket);
-                            string response = protocol.ReceiveData(clientSocket);
+                            string response = protocol.RecieveData(clientSocket);
                             Console.WriteLine(response);
                             break;
                     }
@@ -252,24 +247,26 @@ namespace ClientProyect
                 case 5:
                     PrintUsers(message);
                     Console.WriteLine("Escriba el nombre del usuario con el que quiere abrir un chat o '0' para volver atras.");
-                    string line5 = Console.ReadLine();
-                    if (line5.Equals("0"))
+                    string contactName = Console.ReadLine();
+                    if (contactName.Equals("0"))
                     {
-                        SendName(line5, clientSocket);
-                        protocol.ReceiveData(clientSocket);
+                        SendName(contactName, clientSocket);
+                        protocol.RecieveData(clientSocket);
                         break;
                     }
-                    SendName(line5, clientSocket);
-                    string serverResponse5 = protocol.ReceiveData(clientSocket);
+                    SendName(contactName, clientSocket);
+                    string serverResponse5 = protocol.RecieveData(clientSocket);
                     switch (serverResponse5)
                     {
                         case "WRONGNAME":
                             Console.WriteLine("El usuario no existe o no es amigo tuyo.");
-                            ProcessOption(message, clientSocket, option);
                             break;
 
                         case "OK":
-
+                            Console.WriteLine($"Chat con {contactName}:");
+                            Console.WriteLine($"Escriba 'exit' para salir.");
+                            Thread reciveMessageThread = new Thread(() => GetMessage());
+                            Thread sendMessageThread = new Thread(() => SendMessage());
                             break;
                     }
                     break;
@@ -315,6 +312,36 @@ namespace ClientProyect
             else
             {
                 return 1000;
+            }
+        }
+
+        private static void GetMessage()
+        {
+            while (!finishChat)
+            {
+                clientStream = clientSocket.GetStream();
+                string message = protocol.RecieveData(clientSocket);
+                string[] chatHistory = message.Split('#');
+                Console.WriteLine(chatHistory);
+            }
+        }
+
+        private static void SendMessage()
+        {
+            while (!finishChat)
+            {
+                string message = Console.ReadLine();
+                if (message.Equals("exit"))
+                {
+                    finishChat = true;
+                    string meesageToSend = $"{message}";
+                    protocol.SendData(meesageToSend, clientSocket);
+                }
+                else
+                {
+                    string meesageToSend = $"{message}";
+                    protocol.SendData(meesageToSend, clientSocket);
+                }
             }
         }
     }

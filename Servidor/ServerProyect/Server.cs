@@ -31,7 +31,6 @@ namespace ServerProyect
         private static void ServerStart()
         {
             string serverIP = ConfigurationManager.AppSettings["serverIP"];
-
             int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
             TcpListener serverSocket = new TcpListener(IPAddress.Parse(serverIP), serverPort);
             TcpClient clientSocket = default(TcpClient);
@@ -41,18 +40,10 @@ namespace ServerProyect
                 serverSocket.Start();
                 Console.WriteLine("Esperando cliente...");
 
-                //Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                //IPEndPoint localServerEndpoint = new IPEndPoint(IPAddress.Parse(serverIP), serverPort);
-                //server.Bind(localServerEndpoint);
-                //server.Listen(10);
-                //Console.WriteLine("Esperando cliente...");
-
                 while (running)
                 {
                     clientSocket = serverSocket.AcceptTcpClient();
                     NetworkStream networkStream = clientSocket.GetStream();
-
-                    //Socket client = server.Accept();
                     Console.WriteLine("Cliente conectado con éxito!");
                     Thread clientTrhead = new Thread(() => ClientThread(clientSocket));
                     clientTrhead.Start();
@@ -74,7 +65,7 @@ namespace ServerProyect
             try
             {
                 protocol.SendData("$", client);
-                string message = protocol.ReceiveData(client);
+                string message = protocol.RecieveData(client);
 
                 var information = message.Split('%');
                 int option = Convert.ToInt32(information[0]);
@@ -112,19 +103,19 @@ namespace ServerProyect
                 case 3:
                     string userList3 = GetUsersToAdd(userName);
                     protocol.SendData(userList3, client);
-                    string data3 = protocol.ReceiveData(client);
+                    string data3 = protocol.RecieveData(client);
                     string response = SendFriendRequest(data3);
                     protocol.SendData(response, client);
                     break;
                 case 4:
                     string userList4 = GetPendingFriends(userName);
                     protocol.SendData(userList4, client);
-                    string data4 = protocol.ReceiveData(client);
+                    string data4 = protocol.RecieveData(client);
                     string nameCheck = CheckNameOnPendingRequests(data4);
                     protocol.SendData(nameCheck, client);
                     if (nameCheck.Equals("OK"))
                     {
-                        string userDecision = protocol.ReceiveData(client);
+                        string userDecision = protocol.RecieveData(client);
                         string finalMessage = FriendRequestProcess(data4, userDecision);
                         protocol.SendData(finalMessage, client);
                     }
@@ -133,12 +124,12 @@ namespace ServerProyect
                 case 5:
                     string userList5 = GetFriends(userName);
                     protocol.SendData(userList5, client);
-                    string userNames = protocol.ReceiveData(client);
+                    string userNames = protocol.RecieveData(client);
                     string isAFriend = CheckNameIsAFriend(userNames);
                     protocol.SendData(isAFriend, client);
                     if (isAFriend.Equals("OK"))
                     {
-                        Chat aChat = startChat(userNames);
+                        StartChat(userNames);
                     }
                     break;
                 case 6:
@@ -151,7 +142,7 @@ namespace ServerProyect
 
         private static string ReceiveUserData(TcpClient socketClient)
         {
-            var userPass = protocol.ReceiveData(socketClient);
+            var userPass = protocol.RecieveData(socketClient);
             string[] userData = userPass.Split('#');
             string userName = userData[0];
             string password = userData[1];
@@ -184,7 +175,7 @@ namespace ServerProyect
                         if (user.Password.Equals(password))
                         {
                             user.Connection();
-
+                            clientsList[userName] = socketClient;
                             Console.WriteLine("Autentificación del cliente " + userName + " reailzada con éxito!");
                             return "CONNECT";
                         }
@@ -201,6 +192,7 @@ namespace ServerProyect
                     userAux.Connection();
                     registeredUsers.Add(userAux);
                     Console.WriteLine("Se registro el usuario: " + userName);
+                    clientsList.Add(userName, clientSocket);
                     return "REGISTERED";
                 }
             }
@@ -360,6 +352,7 @@ namespace ServerProyect
                 }
             }
         }
+
         public static string CheckNameIsAFriend(string data)
         {
             string[] splitedData = data.Split('%');
@@ -425,20 +418,50 @@ namespace ServerProyect
                 user.Connected = false;
             }
         }
-        public static Chat startChat(string UserNames)
+
+        public static void StartChat(string UserNames, TcpClient clientSocket)
         {
             lock (chatsLocker)
             {
                 string[] splitedData = UserNames.Split('%');
                 User activeUser = GetUser(splitedData[1]);
                 User userToChat = GetUser(splitedData[0]);
+
+                activeUser.ChatingWith = splitedData[0];
+
+
                 Chat newChat = new Chat
                 {
                     User1 = activeUser,
                     User2 = userToChat,
                     Messages = new List<Message>()
                 };
-                return GetChat(newChat);
+                Chat currentChat = GetChat(newChat);
+                GetChatMessages(currentChat, clientSocket);
+
+                bool chating = true;
+                while(chating)
+                {
+                    userToChat = GetUser(splitedData[0]);
+
+                    string messageRecieved = protocol.ReciveData();
+
+                    if (messageRecieved.Equals("exit"))
+                    {
+                        chating = false;
+                        activeUser.ChatingWith = "NO USER";
+                    }
+                    else
+                    {
+                        string messageToSend = $"{activeUser.UserName} dice: {messageRecieved}";
+
+                        if (userToChat.ChatingWith.Equals(activeUser.UserName))
+                        {
+                            protocol.SendData(messageToSend, clientsList[userToChat.UserName]);
+                        }
+                        currentChat.addMessage(messageRecieved, activeUser);
+                    }
+                }
             }
         }
         private static Chat GetChat(Chat newChat)
@@ -456,7 +479,7 @@ namespace ServerProyect
                 return newChat;
             }
         }
-        public static string GetChatMessages(Chat aChat)
+        public static void GetChatMessages(Chat aChat, TcpClient clientSocket)
         {
             string messagesToShow = "";
             lock (chatsLocker)
@@ -465,7 +488,8 @@ namespace ServerProyect
                 {
                     messagesToShow = (messagesToShow + "#" + message.User.UserName + " dice: " + message.Line);
                 }
-                return messagesToShow;
+
+                protocol.SendData(messagesToShow, clientSocket);
             }
         }
     }

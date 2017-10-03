@@ -13,20 +13,14 @@ namespace Domain
         public User User1 { get; set; }
         public User User2 { get; set; }
 
-        public ValidReturn addMessage(string line, User sender)
+        public void addMessage(string line, User sender)
         {
-            ValidReturn added = new ValidReturn();
             Message newMessage = new Message()
             {
                 User = sender,
                 Line = line
             };
-            added = newMessage.isLineValid();
-            if (added.Valid)
-            {
-                Messages.Add(newMessage);
-            }
-            return added;
+            Messages.Add(newMessage);
         }
 
         public override bool Equals(object obj)
@@ -41,7 +35,7 @@ namespace Domain
             }
             else
             {
-                return ((User1.Equals(((Chat)obj).User1)) && (User2.Equals(((Chat)obj).User2)) || (User1.Equals(((Chat)obj).User2)) && (User2.Equals(((Chat)obj).User1)));
+                return (((User1.Equals(((Chat)obj).User1)) && (User2.Equals(((Chat)obj).User2))) || ((User1.Equals(((Chat)obj).User2)) && (User2.Equals(((Chat)obj).User1))));
             }
         }
     }

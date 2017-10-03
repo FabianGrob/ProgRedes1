@@ -13,7 +13,7 @@ namespace Connection
         {
         }
 
-        public string ReceiveData(TcpClient socket)
+        public string RecieveData(TcpClient socket)
         {
             NetworkStream stream = socket.GetStream();
             byte[] dataLength = new byte[10025];
@@ -26,20 +26,10 @@ namespace Connection
 
             while (message.Equals("$"))
             {
-                message = ReceiveData(socket);
+                message = RecieveData(socket);
             }
             SendData("$", socket);
             return message;
-            //byte[] dataLength = new byte[4];
-            //stream.Read(dataLength, 0, dataLength.Length);
-            //bool a = stream.DataAvailable;
-            //int length = BitConverter.ToInt32(dataLength, 0);
-            //byte[] bytesMessage = new byte[length];
-            //stream.Read(bytesMessage, dataLength.Length, bytesMessage.Length + dataLength.Length);
-
-            //string message = Encoding.ASCII.GetString(bytesMessage);
-
-            //return message;
 
         }
 
@@ -56,7 +46,6 @@ namespace Connection
 
             lengthBinary.CopyTo(toSend, 0);
             data.CopyTo(toSend, lengthBinary.Length);
-
 
             stream.Write(toSend, 0, toSend.Length);
 
