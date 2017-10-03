@@ -272,6 +272,8 @@ namespace ClientProyect
                             while (!finishChat)
                             {
                             }
+                            reciveMessageThread.Abort();
+                            sendMessageThread.Abort();
                             break;
                     }
                     break;

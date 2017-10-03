@@ -155,7 +155,7 @@ namespace ServerProyect
 
                     UserName = userName,
                     Password = password,
-                    ChatingWith="NO USER",
+                    ChatingWith = "NO USER",
                     Friends = new List<User>(),
                     PendingFriends = new List<User>(),
                     Connected = true,
@@ -193,7 +193,7 @@ namespace ServerProyect
                     userAux.Connection();
                     registeredUsers.Add(userAux);
                     Console.WriteLine("Se registro el usuario: " + userName);
-                    clientsList.Add(userName,socketClient);
+                    clientsList.Add(userName, socketClient);
                     return "REGISTERED";
                 }
             }
@@ -422,76 +422,68 @@ namespace ServerProyect
 
         public static void StartChat(string UserNames, TcpClient clientSocket)
         {
-            lock (chatsLocker)
+            string[] splitedData = UserNames.Split('%');
+            User activeUser = GetUser(splitedData[1]);
+            User userToChat = GetUser(splitedData[0]);
+
+            activeUser.ChatingWith = splitedData[0];
+
+
+            Chat newChat = new Chat
             {
-                string[] splitedData = UserNames.Split('%');
-                User activeUser = GetUser(splitedData[1]);
-                User userToChat = GetUser(splitedData[0]);
+                User1 = activeUser,
+                User2 = userToChat,
+                Messages = new List<Message>()
+            };
+            Chat currentChat = GetChat(newChat);
+            GetChatMessages(currentChat, clientSocket);
 
-                activeUser.ChatingWith = splitedData[0];
+            bool chating = true;
+            while (chating)
+            {
+                userToChat = GetUser(splitedData[0]);
 
+                string messageRecieved = protocol.RecieveData(clientSocket);
 
-                Chat newChat = new Chat
+                if (messageRecieved.Equals("exit"))
                 {
-                    User1 = activeUser,
-                    User2 = userToChat,
-                    Messages = new List<Message>()
-                };
-                Chat currentChat = GetChat(newChat);
-                GetChatMessages(currentChat, clientSocket);
-
-                bool chating = true;
-                while(chating)
+                    chating = false;
+                    activeUser.ChatingWith = "NO USER";
+                }
+                else
                 {
-                    userToChat = GetUser(splitedData[0]);
+                    string messageToSend = $"{activeUser.UserName} dice: {messageRecieved}";
 
-                    string messageRecieved = protocol.RecieveData(clientSocket);
-
-                    if (messageRecieved.Equals("exit"))
+                    if (userToChat.ChatingWith.Equals(activeUser.UserName))
                     {
-                        chating = false;
-                        activeUser.ChatingWith = "NO USER";
+                        protocol.SendData(messageToSend, (TcpClient)clientsList[userToChat.UserName]);
                     }
-                    else
-                    {
-                        string messageToSend = $"{activeUser.UserName} dice: {messageRecieved}";
-
-                        if (userToChat.ChatingWith.Equals(activeUser.UserName))
-                        {
-                            protocol.SendData(messageToSend, (TcpClient)clientsList[userToChat.UserName]);
-                        }
-                        currentChat.addMessage(messageRecieved, activeUser);
-                    }
+                    currentChat.addMessage(messageRecieved, activeUser);
                 }
             }
         }
         private static Chat GetChat(Chat newChat)
         {
-            lock (chatsLocker)
+            foreach (Chat aChat in chats)
             {
-                foreach (Chat aChat in chats)
+                if (newChat.Equals(aChat))
                 {
-                    if (newChat.Equals(aChat))
-                    {
-                        return aChat;
-                    }
+                    return aChat;
                 }
-                chats.Add(newChat);
-                return newChat;
             }
+            chats.Add(newChat);
+            return newChat;
         }
         public static void GetChatMessages(Chat aChat, TcpClient clientSocket)
         {
             string messagesToShow = "";
-            lock (chatsLocker)
+            foreach (Message message in aChat.Messages)
             {
-                foreach (Message message in aChat.Messages)
-                {
-                    messagesToShow = (messagesToShow + "#" + message.User.UserName + " dice: " + message.Line);
-                }
-
-                protocol.SendData(messagesToShow, clientSocket);
+                messagesToShow = (messagesToShow + "#" + message.User.UserName + " dice: " + message.Line);
             }
+
+            protocol.SendData(messagesToShow, clientSocket);
+
         }
     }
 }
