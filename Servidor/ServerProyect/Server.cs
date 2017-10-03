@@ -129,7 +129,7 @@ namespace ServerProyect
                     protocol.SendData(isAFriend, client);
                     if (isAFriend.Equals("OK"))
                     {
-                        StartChat(userNames);
+                        StartChat(userNames, client);
                     }
                     break;
                 case 6:
@@ -155,6 +155,7 @@ namespace ServerProyect
 
                     UserName = userName,
                     Password = password,
+                    ChatingWith="NO USER",
                     Friends = new List<User>(),
                     PendingFriends = new List<User>(),
                     Connected = true,
@@ -192,7 +193,7 @@ namespace ServerProyect
                     userAux.Connection();
                     registeredUsers.Add(userAux);
                     Console.WriteLine("Se registro el usuario: " + userName);
-                    clientsList.Add(userName, clientSocket);
+                    clientsList.Add(userName,socketClient);
                     return "REGISTERED";
                 }
             }
@@ -444,7 +445,7 @@ namespace ServerProyect
                 {
                     userToChat = GetUser(splitedData[0]);
 
-                    string messageRecieved = protocol.ReciveData();
+                    string messageRecieved = protocol.RecieveData(clientSocket);
 
                     if (messageRecieved.Equals("exit"))
                     {
@@ -457,7 +458,7 @@ namespace ServerProyect
 
                         if (userToChat.ChatingWith.Equals(activeUser.UserName))
                         {
-                            protocol.SendData(messageToSend, clientsList[userToChat.UserName]);
+                            protocol.SendData(messageToSend, (TcpClient)clientsList[userToChat.UserName]);
                         }
                         currentChat.addMessage(messageRecieved, activeUser);
                     }

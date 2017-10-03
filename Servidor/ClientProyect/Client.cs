@@ -266,7 +266,12 @@ namespace ClientProyect
                             Console.WriteLine($"Chat con {contactName}:");
                             Console.WriteLine($"Escriba 'exit' para salir.");
                             Thread reciveMessageThread = new Thread(() => GetMessage());
+                            reciveMessageThread.Start();
                             Thread sendMessageThread = new Thread(() => SendMessage());
+                            sendMessageThread.Start();
+                            while (!finishChat)
+                            {
+                            }
                             break;
                     }
                     break;
@@ -322,7 +327,10 @@ namespace ClientProyect
                 clientStream = clientSocket.GetStream();
                 string message = protocol.RecieveData(clientSocket);
                 string[] chatHistory = message.Split('#');
-                Console.WriteLine(chatHistory);
+                for (int i = 0; i < chatHistory.Length; i++)
+                {
+                    Console.WriteLine(chatHistory[i]);
+                }
             }
         }
 
