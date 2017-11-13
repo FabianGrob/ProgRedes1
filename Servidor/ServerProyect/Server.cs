@@ -390,21 +390,17 @@ namespace ServerProyect
             {
                 if (splitedUserDecision[0].Equals("1"))
                 {
-
                     activeUser.PendingFriends.Remove(userToAccept);
                     activeUser.Friends.Add(userToAccept);
                     userToAccept.Friends.Add(activeUser);
                     Console.WriteLine($"{activeUser.UserName} acepto la solicitud de {userToAccept.UserName}");
                     return $"Ahora tu y {userToAccept.UserName} son amigos.";
-
                 }
                 else
                 {
-
                     activeUser.PendingFriends.Remove(userToAccept);
                     Console.WriteLine($"{activeUser.UserName} rechazo la solicitud de {userToAccept.UserName}");
                     return "Solicitud rechazada.";
-
                 }
             }
 
@@ -448,6 +444,8 @@ namespace ServerProyect
                 {
                     chating = false;
                     activeUser.ChatingWith = "NO USER";
+                    string responseMessage = "/1";
+                    protocol.SendData(responseMessage, clientSocket);
                 }
                 else
                 {

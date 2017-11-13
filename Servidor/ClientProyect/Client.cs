@@ -36,11 +36,10 @@ namespace ClientProyect
             {
                 string clientIP = ConfigurationManager.AppSettings["clientIP"];
                 Random randomValue = new Random();
-                int port = 8888;
                 int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
                 string serverIP = ConfigurationManager.AppSettings["serverIP"];
                 ;
-                clientSocket.Connect(serverIP, port);
+                clientSocket.Connect(serverIP, serverPort);
                 clientStream = clientSocket.GetStream();
 
                 connectedToServer = true;
@@ -265,6 +264,7 @@ namespace ClientProyect
                         case "OK":
                             Console.WriteLine($"Chat con {contactName}:");
                             Console.WriteLine($"Escriba 'exit' para salir.");
+                            finishChat = false;
                             Thread reciveMessageThread = new Thread(() => GetMessage());
                             reciveMessageThread.Start();
                             Thread sendMessageThread = new Thread(() => SendMessage());
@@ -329,10 +329,17 @@ namespace ClientProyect
             {
                 clientStream = clientSocket.GetStream();
                 string message = protocol.RecieveData(clientSocket);
-                string[] chatHistory = message.Split('#');
-                for (int i = 0; i < chatHistory.Length; i++)
+                if (message.Equals("/1"))
                 {
-                    Console.WriteLine(chatHistory[i]);
+                    finishChat = true;
+                }
+                else
+                {
+                    string[] chatHistory = message.Split('#');
+                    for (int i = 0; i < chatHistory.Length; i++)
+                    {
+                        Console.WriteLine(chatHistory[i]);
+                    }
                 }
             }
         }
@@ -342,17 +349,9 @@ namespace ClientProyect
             while (!finishChat)
             {
                 string message = Console.ReadLine();
-                if (message.Equals("exit"))
-                {
-                    finishChat = true;
-                    string meesageToSend = $"{message}";
-                    protocol.SendData(meesageToSend, clientSocket);
-                }
-                else
-                {
-                    string meesageToSend = $"{message}";
-                    protocol.SendData(meesageToSend, clientSocket);
-                }
+                string meesageToSend = $"{message}";
+                protocol.SendData(meesageToSend, clientSocket);
+
             }
         }
     }
