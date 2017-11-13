@@ -21,14 +21,13 @@ namespace Connection
             int length = BitConverter.ToInt32(dataLength, 0);
             byte[] bytesMessage = new byte[length];
             stream.Read(bytesMessage, 0, length);
+            
 
             string message = Encoding.ASCII.GetString(bytesMessage);
 
-            while (message.Equals("$"))
-            {
-                message = RecieveData(socket);
-            }
-            SendData("$", socket);
+            Array.Clear(dataLength, 0, 10025);
+            Array.Clear(bytesMessage, 0, length);
+
             return message;
 
         }

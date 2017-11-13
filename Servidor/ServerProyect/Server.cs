@@ -64,7 +64,6 @@ namespace ServerProyect
         {
             try
             {
-                protocol.SendData("$", client);
                 string message = protocol.RecieveData(client);
 
                 var information = message.Split('%');
