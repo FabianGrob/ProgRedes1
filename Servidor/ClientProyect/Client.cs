@@ -114,7 +114,7 @@ namespace ClientProyect
                 case "REGISTERED":
                     Console.WriteLine("Usuario registrado");
                     StartQueue();
-                    SendToQueue("se ha registrado con exito el siguiente usuario: " + userName );
+                    SendToQueue("Se ha registrado con exito el siguiente usuario: " + userName );
                     return true;
                 case "DUPLICATED":
                     Console.WriteLine("Este usuario ya esta conectado");
@@ -250,7 +250,7 @@ namespace ClientProyect
                             string response = protocol.RecieveData(clientSocket);
                             Console.WriteLine(response);
                             StartQueue();
-                            SendToQueue("Los usuarios: " + user + " y " + line4 + " ahora son amigos");
+                            SendToQueue("Accion del usuario: " + user + " => " + response);
                             break;
                     }
                     break;
@@ -347,6 +347,8 @@ namespace ClientProyect
                 if (message.Equals("/1"))
                 {
                     finishChat = true;
+                    StartQueue();
+                    SendToQueue("El usuario: " + user + " ha salido de su chat abierto");
                 }
                 else
                 {

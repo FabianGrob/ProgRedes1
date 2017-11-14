@@ -178,12 +178,12 @@ namespace ServerProyect
                         {
                             user.Connection();
                             clientsList[userName] = socketClient;
-                            Console.WriteLine("Autentificación del cliente " + userName + " reailzada con éxito!");
+                           //("Autentificación del cliente " + userName + " reailzada con éxito!");
                             return "CONNECT";
                         }
                         else
                         {
-                            Console.WriteLine("Autentificación incorrecta!");
+                            //("Autentificación incorrecta!");
                             return "PASSWORDERROR";
                         }
                     }
@@ -193,7 +193,7 @@ namespace ServerProyect
                 {
                     userAux.Connection();
                     registeredUsers.Add(userAux);
-                    Console.WriteLine("Se registro el usuario: " + userName);
+                    //"Se registro el usuario: " + userName
                     clientsList.Add(userName, socketClient);
                     return "REGISTERED";
                 }
@@ -395,7 +395,7 @@ namespace ServerProyect
                     activeUser.PendingFriends.Remove(userToAccept);
                     activeUser.Friends.Add(userToAccept);
                     userToAccept.Friends.Add(activeUser);
-                    Console.WriteLine($"{activeUser.UserName} acepto la solicitud de {userToAccept.UserName}");
+                    //Console.WriteLine($"{activeUser.UserName} acepto la solicitud de {userToAccept.UserName}");
                     //agregar enviar logs
 
                     return $"Ahora tu y {userToAccept.UserName} son amigos.";
@@ -403,7 +403,7 @@ namespace ServerProyect
                 else
                 {
                     activeUser.PendingFriends.Remove(userToAccept);
-                    Console.WriteLine($"{activeUser.UserName} rechazo la solicitud de {userToAccept.UserName}");
+                    //Console.WriteLine($"{activeUser.UserName} rechazo la solicitud de {userToAccept.UserName}");
                     return "Solicitud rechazada.";
                 }
             }
