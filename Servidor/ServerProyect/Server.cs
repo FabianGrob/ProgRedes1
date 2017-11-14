@@ -8,6 +8,7 @@ using System.Threading;
 using Connection;
 using Domain;
 using System.Collections;
+using System.Messaging;
 
 namespace ServerProyect
 {
@@ -25,6 +26,7 @@ namespace ServerProyect
 
         static void Main(string[] args)
         {
+            //StartQueue();
             ServerStart();
         }
 
@@ -394,6 +396,8 @@ namespace ServerProyect
                     activeUser.Friends.Add(userToAccept);
                     userToAccept.Friends.Add(activeUser);
                     Console.WriteLine($"{activeUser.UserName} acepto la solicitud de {userToAccept.UserName}");
+                    //agregar enviar logs
+
                     return $"Ahora tu y {userToAccept.UserName} son amigos.";
                 }
                 else
@@ -428,7 +432,7 @@ namespace ServerProyect
             {
                 User1 = activeUser,
                 User2 = userToChat,
-                Messages = new List<Message>()
+                Messages = new List<Domain.Message>()
             };
             Chat currentChat = GetChat(newChat);
             GetChatMessages(currentChat, clientSocket);
@@ -474,7 +478,7 @@ namespace ServerProyect
         public static void GetChatMessages(Chat aChat, TcpClient clientSocket)
         {
             string messagesToShow = "";
-            foreach (Message message in aChat.Messages)
+            foreach (Domain.Message message in aChat.Messages)
             {
                 messagesToShow = (messagesToShow + "#" + message.User.UserName + " dice: " + message.Line);
             }
@@ -482,5 +486,20 @@ namespace ServerProyect
             protocol.SendData(messagesToShow, clientSocket);
 
         }
+
+        public static void SendLog(string messageToSend) {
+            string queueName = ".\\private$\\test";
+            MessageQueue mq;
+            if (MessageQueue.Exists(queueName))
+            {
+                mq = new MessageQueue(queueName);
+            }
+            else
+            {
+                mq = MessageQueue.Create(queueName);
+            }
+            mq.Send(messageToSend);
+        }
+       
     }
 }

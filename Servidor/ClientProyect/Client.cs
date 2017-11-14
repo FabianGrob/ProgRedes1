@@ -8,6 +8,7 @@ using System.Net;
 using System.Configuration;
 using System.Threading;
 using Connection;
+using System.Messaging;
 
 namespace ClientProyect
 {
@@ -77,7 +78,7 @@ namespace ClientProyect
 
 
                     protocol.SendData(userPass, clientSocket);
-                    userLogedIn = ReceiveConectionAccess(clientSocket);
+                    userLogedIn = ReceiveConectionAccess(clientSocket,userName);
 
                     if (userLogedIn)
                     {
@@ -99,7 +100,7 @@ namespace ClientProyect
             }
         }
 
-        private static bool ReceiveConectionAccess(TcpClient socket)
+        private static bool ReceiveConectionAccess(TcpClient socket,string userName)
         {
             var message = protocol.RecieveData(socket);
 
@@ -107,9 +108,13 @@ namespace ClientProyect
             {
                 case "CONNECT":
                     Console.WriteLine("Usuario conectado");
+                    StartQueue();
+                    SendToQueue("Se ha conectado con exito el siguiente usuario: " +userName );
                     return true;
                 case "REGISTERED":
                     Console.WriteLine("Usuario registrado");
+                    StartQueue();
+                    SendToQueue("se ha registrado con exito el siguiente usuario: " + userName );
                     return true;
                 case "DUPLICATED":
                     Console.WriteLine("Este usuario ya esta conectado");
@@ -193,10 +198,14 @@ namespace ClientProyect
 
                         case "REQUESTSENT":
                             Console.WriteLine("Solicitud enviada.");
+                            StartQueue();
+                            SendToQueue("El usuario: "+user + " ha enviado una solicitud a " + line3);
                             break;
 
                         case "ADDED":
                             Console.WriteLine("Agregado con exito!");
+                            StartQueue();
+                            SendToQueue("Los usuarios: " + user + " y " + line3 + " ahora son amigos");
                             break;
                     }
                     break;
@@ -240,6 +249,8 @@ namespace ClientProyect
                             SendOption(option, clientSocket);
                             string response = protocol.RecieveData(clientSocket);
                             Console.WriteLine(response);
+                            StartQueue();
+                            SendToQueue("Los usuarios: " + user + " y " + line4 + " ahora son amigos");
                             break;
                     }
                     break;
@@ -265,6 +276,8 @@ namespace ClientProyect
                             Console.WriteLine($"Chat con {contactName}:");
                             Console.WriteLine($"Escriba 'exit' para salir.");
                             finishChat = false;
+                            StartQueue();
+                            SendToQueue("El usuario: " + user + " ha iniciado un chat con: " + contactName);
                             Thread reciveMessageThread = new Thread(() => GetMessage());
                             reciveMessageThread.Start();
                             Thread sendMessageThread = new Thread(() => SendMessage());
@@ -281,6 +294,8 @@ namespace ClientProyect
                 case 6:
                     keepConnection = false;
                     Console.WriteLine(message);
+                    StartQueue();
+                    SendToQueue("El usuario: " + user + "se ha desconectado");
                     break;
 
             }
@@ -353,6 +368,33 @@ namespace ClientProyect
                 protocol.SendData(meesageToSend, clientSocket);
 
             }
+        }
+        public static void StartQueue()
+        {
+            string queueName = ".\\private$\\test";
+            MessageQueue mq;
+            if (MessageQueue.Exists(queueName))
+            {
+                mq = new MessageQueue(queueName);
+            }
+            else
+            {
+                mq = MessageQueue.Create(queueName);
+            }
+        }
+        public static void SendToQueue(string messageToSend)
+        {
+            string queueName = ".\\private$\\test";
+            MessageQueue mq;
+            if (MessageQueue.Exists(queueName))
+            {
+                mq = new MessageQueue(queueName);
+            }
+            else
+            {
+                mq = MessageQueue.Create(queueName);
+            }
+            mq.Send(messageToSend);
         }
     }
 }
