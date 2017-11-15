@@ -9,6 +9,7 @@ using Connection;
 using Domain;
 using System.Collections;
 using System.Messaging;
+using System.IO;
 
 namespace ServerProyect
 {
@@ -22,6 +23,7 @@ namespace ServerProyect
         public static Object userLocker = new Object();
         public static Object chatsLocker = new Object();
         public static Hashtable clientsList = new Hashtable();
+
 
 
         static void Main(string[] args)
@@ -178,7 +180,7 @@ namespace ServerProyect
                         {
                             user.Connection();
                             clientsList[userName] = socketClient;
-                           //("Autentificación del cliente " + userName + " reailzada con éxito!");
+                            //("Autentificación del cliente " + userName + " reailzada con éxito!");
                             return "CONNECT";
                         }
                         else
@@ -435,7 +437,9 @@ namespace ServerProyect
                 Messages = new List<Domain.Message>()
             };
             Chat currentChat = GetChat(newChat);
+
             GetChatMessages(currentChat, clientSocket);
+            GetPendingFiles(currentChat, clientSocket, activeUser);
 
             bool chating = true;
             while (chating)
@@ -444,12 +448,9 @@ namespace ServerProyect
 
                 string messageRecieved = protocol.RecieveData(clientSocket);
 
-                if (messageRecieved.Equals("exit"))
+                if (MessageIsCommand(messageRecieved))
                 {
-                    chating = false;
-                    activeUser.ChatingWith = "NO USER";
-                    string responseMessage = "/1";
-                    protocol.SendData(responseMessage, clientSocket);
+                    ExecuteCommand(messageRecieved, activeUser, userToChat, clientSocket, currentChat, ref chating);
                 }
                 else
                 {
@@ -463,6 +464,182 @@ namespace ServerProyect
                 }
             }
         }
+
+        private static void GetPendingFiles(Chat currentChat, TcpClient clientSocket, User activeUser)
+        {
+            foreach (var sentFile in currentChat.Files)
+            {
+                if(!sentFile.User.UserName.Equals(activeUser.UserName))
+                {
+                    OfferFiles(sentFile.FileName, clientSocket, currentChat);
+                }
+            }
+        }
+
+        private static void OfferFiles(string fileName, TcpClient clientSocket, Chat currentChat)
+        {
+            bool waitingAnswer = true;
+            while (waitingAnswer)
+            {
+                protocol.SendData("/4", clientSocket);
+                var userResponse = protocol.RecieveData(clientSocket);
+                if (userResponse.Equals("si"))
+                {
+                    waitingAnswer = false;
+                    protocol.SendData("1", clientSocket);
+                    FileStream file = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                    protocol.SendFile(file, clientSocket);
+                    DeleteServerFile(fileName, currentChat);
+                }
+                else
+                {
+                    if (userResponse.Equals("no"))
+                    {
+                        waitingAnswer = false;
+                        protocol.SendData("2", clientSocket);
+                        DeleteServerFile(fileName, currentChat);
+                    }
+                    else
+                    {
+                        protocol.SendData("3", clientSocket);
+                    }
+                }
+            }
+        }
+
+        private static void DeleteServerFile(string fileName, Chat currentChat)
+        {
+            foreach (var file in currentChat.Files)
+            {
+                if (file.FileName.Equals(fileName))
+                {
+                    currentChat.Files.Remove(file);
+                }
+            }
+        }
+
+        private static void ExecuteCommand(string messageRecieved, User activeUser, User userToChat, TcpClient clientSocket, Chat currentChat, ref bool chating)
+        {
+            if (messageRecieved.Contains(" "))
+            {
+                var splited = messageRecieved.Split(' ');
+                if (splited[0].Equals("/send"))
+                {
+                    string filePath = splited[1];
+
+                    protocol.SendData("Enviando el archivo...", clientSocket);
+                    protocol.SendData("/2", clientSocket);
+
+                    RecieveFile(messageRecieved, activeUser, userToChat, clientSocket, currentChat);
+
+                    protocol.SendData("/3", clientSocket);
+                    protocol.SendData("Archivo enviado...", clientSocket);
+
+
+                    if (userToChat.ChatingWith.Equals(activeUser.UserName))
+                    {
+                        OfferNewFiles(userToChat, currentChat);
+                    }
+                }
+                else
+                {
+                    protocol.SendData("Comando invalido", clientSocket);
+                }
+            }
+            else
+            {
+                if (messageRecieved.Equals("/exit"))
+                {
+                    chating = false;
+                    activeUser.ChatingWith = "NO USER";
+                    string responseMessage = "/1";
+                    protocol.SendData(responseMessage, clientSocket);
+                }
+                else
+                {
+                    protocol.SendData("Comando invalido", clientSocket);
+                }
+            }
+        }
+
+        private static void OfferNewFiles(User userToChat, Chat currentChat)
+        {
+            bool waitingAnswer = true;
+            while (waitingAnswer)
+            {
+                var userSocket = (TcpClient)clientsList[userToChat.UserName];
+                protocol.SendData("/4", userSocket);
+                var userResponse = protocol.RecieveData(userSocket);
+                if (userResponse.Equals("si"))
+                {
+                    waitingAnswer = false;
+                    protocol.SendData("1", userSocket);
+                    FileStream file = new FileStream(currentChat.Files[0].FileName, FileMode.Open, FileAccess.Read);
+                    protocol.SendFile(file, userSocket);
+                    currentChat.Files.RemoveAt(0);
+                }
+                else
+                {
+                    if (userResponse.Equals("no"))
+                    {
+                        waitingAnswer = false;
+                        currentChat.Files.RemoveAt(0);
+                        protocol.SendData("2", userSocket);
+                    }
+                    else
+                    {
+                        protocol.SendData("3", userSocket);
+                    }
+                }
+            }
+        }
+
+        private static void RecieveFile(string messageRecieved, User activeUser, User userToChat, TcpClient clientSocket, Chat currentChat)
+        {
+            string filePath = GetFilePath(messageRecieved);
+
+            string SaveFileName = filePath + "Server_File";
+            if (SaveFileName != string.Empty)
+            {
+                protocol.RecieveFile(clientSocket, SaveFileName);
+            }
+
+            SentFile newFile = new SentFile()
+            {
+                FileName = SaveFileName,
+                User = activeUser
+            };
+            currentChat.Files.Add(newFile);
+        }
+
+        private static string GetFilePath(string message)
+        {
+            var splited = message.Split(' ');
+            string finalPath = splited[1];
+            try
+            {
+                for (int i = 2; i < splited.Length; i++)
+                {
+                    finalPath += " " + splited[i];
+                }
+                return finalPath;
+            }
+            catch (Exception)
+            {
+                return finalPath;
+            }
+
+        }
+
+        private static bool MessageIsCommand(string messageRecieved)
+        {
+            if (messageRecieved[0] == '/')
+            {
+                return true;
+            }
+            return false;
+        }
+
         private static Chat GetChat(Chat newChat)
         {
             foreach (Chat aChat in chats)
@@ -487,7 +664,8 @@ namespace ServerProyect
 
         }
 
-        public static void SendLog(string messageToSend) {
+        public static void SendLog(string messageToSend)
+        {
             string queueName = ".\\private$\\test";
             MessageQueue mq;
             if (MessageQueue.Exists(queueName))
@@ -500,6 +678,6 @@ namespace ServerProyect
             }
             mq.Send(messageToSend);
         }
-       
+
     }
 }

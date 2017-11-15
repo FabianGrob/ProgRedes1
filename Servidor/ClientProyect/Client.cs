@@ -9,6 +9,7 @@ using System.Configuration;
 using System.Threading;
 using Connection;
 using System.Messaging;
+using System.IO;
 
 namespace ClientProyect
 {
@@ -21,6 +22,9 @@ namespace ClientProyect
         public static bool keepConnection = true;
         public static string user = null;
         public static bool finishChat = false;
+        public static bool sendingFile = false;
+        public static bool recievingFiles = false;
+        
 
         static void Main(string[] args)
         {
@@ -78,7 +82,7 @@ namespace ClientProyect
 
 
                     protocol.SendData(userPass, clientSocket);
-                    userLogedIn = ReceiveConectionAccess(clientSocket,userName);
+                    userLogedIn = ReceiveConectionAccess(clientSocket, userName);
 
                     if (userLogedIn)
                     {
@@ -100,7 +104,7 @@ namespace ClientProyect
             }
         }
 
-        private static bool ReceiveConectionAccess(TcpClient socket,string userName)
+        private static bool ReceiveConectionAccess(TcpClient socket, string userName)
         {
             var message = protocol.RecieveData(socket);
 
@@ -109,12 +113,12 @@ namespace ClientProyect
                 case "CONNECT":
                     Console.WriteLine("Usuario conectado");
                     StartQueue();
-                    SendToQueue("Se ha conectado con exito el siguiente usuario: " +userName );
+                    SendToQueue("Se ha conectado con exito el siguiente usuario: " + userName);
                     return true;
                 case "REGISTERED":
                     Console.WriteLine("Usuario registrado");
                     StartQueue();
-                    SendToQueue("Se ha registrado con exito el siguiente usuario: " + userName );
+                    SendToQueue("Se ha registrado con exito el siguiente usuario: " + userName);
                     return true;
                 case "DUPLICATED":
                     Console.WriteLine("Este usuario ya esta conectado");
@@ -199,7 +203,7 @@ namespace ClientProyect
                         case "REQUESTSENT":
                             Console.WriteLine("Solicitud enviada.");
                             StartQueue();
-                            SendToQueue("El usuario: "+user + " ha enviado una solicitud a " + line3);
+                            SendToQueue("El usuario: " + user + " ha enviado una solicitud a " + line3);
                             break;
 
                         case "ADDED":
@@ -287,7 +291,7 @@ namespace ClientProyect
                             }
                             sendMessageThread.Abort();
                             reciveMessageThread.Abort();
-                            
+
                             break;
                     }
                     break;
@@ -350,6 +354,45 @@ namespace ClientProyect
                     StartQueue();
                     SendToQueue("El usuario: " + user + " ha salido de su chat abierto");
                 }
+                if (message.Equals("/2"))
+                {
+                    sendingFile = true;
+                }
+                if (message.Equals("/3"))
+                {
+                    sendingFile = false;
+                }
+                if (message.Equals("/4"))
+                {
+                    recievingFiles = true;
+                    while (recievingFiles)
+                    {
+                        Console.WriteLine("Este usuario desea enviarle un archivo, desea aceptarlo? si o no");
+                        var response = Console.ReadLine();
+                        protocol.SendData(response, clientSocket);
+                        var serverMessage = protocol.RecieveData(clientSocket);
+                        if (serverMessage.Equals("1"))
+                        {
+                            Console.WriteLine("Indique la ruta donde quiere guardar el archivo incluido el nombre: ");
+                            var responsePath = Console.ReadLine();
+                            protocol.RecieveFile(clientSocket, responsePath);
+                            recievingFiles = false;
+
+                        }
+                        if (serverMessage.Equals("2"))
+                        {
+                            Console.WriteLine("Archivo rechazado.");
+                            recievingFiles = false;
+                        }
+                        if (serverMessage.Equals("3"))
+                        {
+                            Console.WriteLine("Indique una opcion valida. si o no");
+                            var newResponse = Console.ReadLine();
+                            protocol.SendData(newResponse, clientSocket);
+                        }
+                    }
+                }
+
                 else
                 {
                     string[] chatHistory = message.Split('#');
@@ -365,12 +408,45 @@ namespace ClientProyect
         {
             while (!finishChat)
             {
-                string message = Console.ReadLine();
-                string meesageToSend = $"{message}";
-                protocol.SendData(meesageToSend, clientSocket);
+                while (!sendingFile && !recievingFiles)
+                {
+                    string message = Console.ReadLine();
+                    string messageToSend = $"{message}";
+                    protocol.SendData(messageToSend, clientSocket);
 
+                    if (messageToSend.Contains(" "))
+                    {
+                        string[] splitedMessage = messageToSend.Split(' ');
+                        if (messageToSend.Split(' ')[0].Equals("/send"))
+                        {
+                            string filePath = GetFilePath(messageToSend);
+                            FileStream file = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                            protocol.SendFile(file, clientSocket);
+                        }
+                    }
+                }
             }
         }
+
+        private static string GetFilePath(string messageToSend)
+        {
+            var splited = messageToSend.Split(' ');
+            string finalPath = splited[1];
+            try
+            {
+                for (int i = 2; i < splited.Length; i++)
+                {
+                    finalPath += " " + splited[i];
+                }
+                return finalPath;
+            }
+            catch(Exception)
+            {
+                return finalPath;
+            }
+
+        }
+
         public static void StartQueue()
         {
             string queueName = ".\\private$\\test";

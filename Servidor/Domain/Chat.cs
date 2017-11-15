@@ -9,6 +9,7 @@ namespace Domain
 {
     public class Chat
     {
+        public List<SentFile> Files { get; set; }
         public List<Message> Messages { get; set; }
         public User User1 { get; set; }
         public User User2 { get; set; }
