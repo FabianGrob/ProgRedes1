@@ -3,6 +3,7 @@ using Domain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,7 +23,7 @@ namespace AdminClient
                 int option = MainMenu();
                 ProcessOption(option, client);
             }
-            
+
         }
 
         #region MainMenu
@@ -85,7 +86,7 @@ namespace AdminClient
                     DeleteUser(client);
                     break;
                 case 3:
-                    ModificarUsuario(client);
+                    ModifyUser(client);
                     break;
                 case 4:
                     CloseApp();
@@ -95,20 +96,42 @@ namespace AdminClient
 
         private static void RegisterUser(ServiceClient client)
         {
-            Console.WriteLine("Ingrese el nombre de usuario a registrar: ");
-            string name = Console.ReadLine();
-            Console.WriteLine("Ingrese la contraseña: ");
-            string pass = Console.ReadLine();
+            string name = "";
+            string pass = "";
+            bool datoValidoUser = false;
+            while (!datoValidoUser)
+            {
+                Console.WriteLine("Ingrese el nombre de usuario a registrar: ");
+                name = Console.ReadLine();
+                if (name.Length > 0)
+                {
+                    datoValidoUser = true;
+                }
+            }
 
-            string serverResponse = client.RegisterUser(name, pass);
 
-            if (serverResponse.Equals("OK"))
+            bool datoValidoPass = false;
+            while (!datoValidoPass)
+            {
+                Console.WriteLine("Ingrese la contraseña: ");
+                pass = Console.ReadLine();
+                if (pass.Length > 0)
+                {
+                    datoValidoPass = true;
+                }
+            }
+
+            bool serverResponse = client.RegisterUser(name, pass);
+
+            if (serverResponse.Equals(true))
             {
                 Console.WriteLine("Usuario registrado con exito.");
+                
+
             }
             else
             {
-                Console.WriteLine("No se pudo registrar, el usuario ya exite.");
+                Console.WriteLine("No se pudo registrar, el usuario ya exite o algun dato esta vacio.");
             }
         }
 
@@ -116,7 +139,7 @@ namespace AdminClient
         {
             Console.WriteLine("Lista de usuarios: ");
 
-            List<User> users = client.GetUsers();
+            List<User> users = client.GetUsers().ToList();
 
             int cont = 1;
             foreach (var user in users)
@@ -127,23 +150,24 @@ namespace AdminClient
             Console.WriteLine("Escriba el nombre del usuario que desea eliminar: ");
             string toDelete = Console.ReadLine();
 
-            string serverResponse = client.DeleteUser(toDelete);
+            bool serverResponse = client.DeleteUser(toDelete);
 
-            if (serverResponse.Equals("OK"))
+            if (serverResponse)
             {
                 Console.WriteLine("Usuario eliminado con exito.");
+                
             }
             else
             {
-                Console.WriteLine("No se pudo eliminar.");
+                Console.WriteLine("No se pudo eliminar, el usuario no existe o esta conectado.");
             }
         }
 
-        private static void ModificarUsuario(ServiceClient client)
+        private static void ModifyUser(ServiceClient client)
         {
             Console.WriteLine("Lista de usuarios: ");
 
-            List<User> users = client.GetUsers();
+            List<User> users = client.GetUsers().ToList();
 
             int cont = 1;
             foreach (var user in users)
@@ -152,7 +176,7 @@ namespace AdminClient
             }
 
             Console.WriteLine("Escriba el nombre del usuario que desea modificar: ");
-            string toDelete = Console.ReadLine();
+            string toModify = Console.ReadLine();
 
             Console.WriteLine("Escriba el nuevo nombre de usuario: ");
             string newName = Console.ReadLine();
@@ -160,15 +184,16 @@ namespace AdminClient
             Console.WriteLine("Escriba la nueva contraseña: ");
             string newPass = Console.ReadLine();
 
-            string serverResponse = client.ModifyUser(toDelete, newName, newPass);
+            bool serverResponse = client.ModifyUser(toModify, newName, newPass);
 
-            if (serverResponse.Equals("OK"))
+            if (serverResponse)
             {
                 Console.WriteLine("Usuario modificado con exito.");
+                
             }
             else
             {
-                Console.WriteLine("No se pudo modificar.");
+                Console.WriteLine("No se pudo modificar, el usuario no exite o esta conectado.");
             }
         }
 
@@ -176,5 +201,6 @@ namespace AdminClient
         {
             Environment.Exit(0);
         }
+      
     }
 }

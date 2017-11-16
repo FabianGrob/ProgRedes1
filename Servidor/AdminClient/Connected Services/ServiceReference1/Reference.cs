@@ -78,29 +78,23 @@ namespace AdminClient.ServiceReference1 {
     [System.ServiceModel.ServiceContractAttribute(ConfigurationName="ServiceReference1.IService")]
     public interface IService {
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/GetData", ReplyAction="http://tempuri.org/IService/GetDataResponse")]
-        string GetData(int value);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/GetData", ReplyAction="http://tempuri.org/IService/GetDataResponse")]
-        System.Threading.Tasks.Task<string> GetDataAsync(int value);
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/RegisterUser", ReplyAction="http://tempuri.org/IService/RegisterUserResponse")]
+        bool RegisterUser(string name, string pass);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/RegisterUser", ReplyAction="http://tempuri.org/IService/RegisterUserResponse")]
-        string RegisterUser(string name, string pass);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/RegisterUser", ReplyAction="http://tempuri.org/IService/RegisterUserResponse")]
-        System.Threading.Tasks.Task<string> RegisterUserAsync(string name, string pass);
+        System.Threading.Tasks.Task<bool> RegisterUserAsync(string name, string pass);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/DeleteUser", ReplyAction="http://tempuri.org/IService/DeleteUserResponse")]
-        string DeleteUser(string name);
+        bool DeleteUser(string name);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/DeleteUser", ReplyAction="http://tempuri.org/IService/DeleteUserResponse")]
-        System.Threading.Tasks.Task<string> DeleteUserAsync(string name);
+        System.Threading.Tasks.Task<bool> DeleteUserAsync(string name);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/ModifyUser", ReplyAction="http://tempuri.org/IService/ModifyUserResponse")]
-        string ModifyUser(string name, string newName, string newPass);
+        bool ModifyUser(string name, string newName, string newPass);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/ModifyUser", ReplyAction="http://tempuri.org/IService/ModifyUserResponse")]
-        System.Threading.Tasks.Task<string> ModifyUserAsync(string name, string newName, string newPass);
+        System.Threading.Tasks.Task<bool> ModifyUserAsync(string name, string newName, string newPass);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/GetUsers", ReplyAction="http://tempuri.org/IService/GetUsersResponse")]
         Domain.User[] GetUsers();
@@ -113,6 +107,12 @@ namespace AdminClient.ServiceReference1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/GetDataUsingDataContract", ReplyAction="http://tempuri.org/IService/GetDataUsingDataContractResponse")]
         System.Threading.Tasks.Task<AdminClient.ServiceReference1.CompositeType> GetDataUsingDataContractAsync(AdminClient.ServiceReference1.CompositeType composite);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/GetData", ReplyAction="http://tempuri.org/IService/GetDataResponse")]
+        string GetData(int value);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService/GetData", ReplyAction="http://tempuri.org/IService/GetDataResponse")]
+        System.Threading.Tasks.Task<string> GetDataAsync(int value);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -142,35 +142,27 @@ namespace AdminClient.ServiceReference1 {
                 base(binding, remoteAddress) {
         }
         
-        public string GetData(int value) {
-            return base.Channel.GetData(value);
-        }
-        
-        public System.Threading.Tasks.Task<string> GetDataAsync(int value) {
-            return base.Channel.GetDataAsync(value);
-        }
-        
-        public string RegisterUser(string name, string pass) {
+        public bool RegisterUser(string name, string pass) {
             return base.Channel.RegisterUser(name, pass);
         }
         
-        public System.Threading.Tasks.Task<string> RegisterUserAsync(string name, string pass) {
+        public System.Threading.Tasks.Task<bool> RegisterUserAsync(string name, string pass) {
             return base.Channel.RegisterUserAsync(name, pass);
         }
         
-        public string DeleteUser(string name) {
+        public bool DeleteUser(string name) {
             return base.Channel.DeleteUser(name);
         }
         
-        public System.Threading.Tasks.Task<string> DeleteUserAsync(string name) {
+        public System.Threading.Tasks.Task<bool> DeleteUserAsync(string name) {
             return base.Channel.DeleteUserAsync(name);
         }
         
-        public string ModifyUser(string name, string newName, string newPass) {
+        public bool ModifyUser(string name, string newName, string newPass) {
             return base.Channel.ModifyUser(name, newName, newPass);
         }
         
-        public System.Threading.Tasks.Task<string> ModifyUserAsync(string name, string newName, string newPass) {
+        public System.Threading.Tasks.Task<bool> ModifyUserAsync(string name, string newName, string newPass) {
             return base.Channel.ModifyUserAsync(name, newName, newPass);
         }
         
@@ -188,6 +180,14 @@ namespace AdminClient.ServiceReference1 {
         
         public System.Threading.Tasks.Task<AdminClient.ServiceReference1.CompositeType> GetDataUsingDataContractAsync(AdminClient.ServiceReference1.CompositeType composite) {
             return base.Channel.GetDataUsingDataContractAsync(composite);
+        }
+        
+        public string GetData(int value) {
+            return base.Channel.GetData(value);
+        }
+        
+        public System.Threading.Tasks.Task<string> GetDataAsync(int value) {
+            return base.Channel.GetDataAsync(value);
         }
     }
 }

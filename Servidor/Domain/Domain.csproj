@@ -45,7 +45,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SentFile.cs" />
     <Compile Include="User.cs" />
-    <Compile Include="UserFuncionalities.cs" />
     <Compile Include="ValidReturn.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

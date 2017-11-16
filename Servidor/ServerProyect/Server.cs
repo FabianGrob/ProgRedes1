@@ -10,10 +10,13 @@ using Domain;
 using System.Collections;
 using System.Messaging;
 using System.IO;
+using System.Runtime.Remoting.Channels.Tcp;
+using System.Runtime.Remoting.Channels;
+using System.Runtime.Remoting;
 
 namespace ServerProyect
 {
-    public class Server
+    public class Server : RemotingShared
     {
 
         public static IProtocol protocol = new Protocol();
@@ -36,8 +39,15 @@ namespace ServerProyect
         {
             string serverIP = ConfigurationManager.AppSettings["serverIP"];
             int serverPort = Int32.Parse(ConfigurationManager.AppSettings["serverPort"]);
+            ServerIpAddress = ConfigurationManager.AppSettings["serverIP"];
             TcpListener serverSocket = new TcpListener(IPAddress.Parse(serverIP), serverPort);
             TcpClient clientSocket = default(TcpClient);
+
+            TcpChannel lTcpChannel = new TcpChannel(RemotingShared.Port);
+            ChannelServices.RegisterChannel(lTcpChannel, true);
+            Type lRemotingSharedType = typeof(Server);
+            RemotingConfiguration.ApplicationName = RemotingShared.RemotingName + "App";
+            RemotingConfiguration.RegisterWellKnownServiceType(lRemotingSharedType, RemotingShared.RemotingName, WellKnownObjectMode.Singleton);
 
             try
             {
@@ -121,6 +131,8 @@ namespace ServerProyect
                         string userDecision = protocol.RecieveData(client);
                         string finalMessage = FriendRequestProcess(data4, userDecision);
                         protocol.SendData(finalMessage, client);
+                        StartQueue();
+                        SendToQueue("Accion del usuario: " + userName + " => " + finalMessage);
                     }
                     break;
 
@@ -180,12 +192,12 @@ namespace ServerProyect
                         {
                             user.Connection();
                             clientsList[userName] = socketClient;
-                            //("Autentificación del cliente " + userName + " reailzada con éxito!");
+                            StartQueue();
+                            SendToQueue("Se ha conectado con exito el siguiente usuario: " + userName);
                             return "CONNECT";
                         }
                         else
                         {
-                            //("Autentificación incorrecta!");
                             return "PASSWORDERROR";
                         }
                     }
@@ -195,7 +207,8 @@ namespace ServerProyect
                 {
                     userAux.Connection();
                     registeredUsers.Add(userAux);
-                    //"Se registro el usuario: " + userName
+                    StartQueue();
+                    SendToQueue("Se ha registrado con exito el siguiente usuario: " + userName);
                     clientsList.Add(userName, socketClient);
                     return "REGISTERED";
                 }
@@ -289,6 +302,8 @@ namespace ServerProyect
                     {
                         if (userToAdd.PendingFriends.Contains(activeUser))
                         {
+                            StartQueue();
+                            SendToQueue("El usuario: " + activeUser.UserName + " ha enviado una solicitud a " + userToAdd.UserName);
                             return "REQUESTSENT";
                         }
                         else
@@ -298,6 +313,8 @@ namespace ServerProyect
                                 activeUser.PendingFriends.Remove(userToAdd);
                                 activeUser.Friends.Add(userToAdd);
                                 userToAdd.Friends.Add(activeUser);
+                                StartQueue();
+                                SendToQueue("Los usuarios: " + activeUser.UserName + " y " + userToAdd.UserName + " ahora son amigos");
                                 return "ADDED";
                             }
                             else
@@ -418,6 +435,8 @@ namespace ServerProyect
             lock (userLocker)
             {
                 user.Connected = false;
+                StartQueue();
+                SendToQueue("El usuario: " + userName + "se ha desconectado");
             }
         }
 
@@ -426,7 +445,8 @@ namespace ServerProyect
             string[] splitedData = UserNames.Split('%');
             User activeUser = GetUser(splitedData[1]);
             User userToChat = GetUser(splitedData[0]);
-
+            StartQueue();
+            SendToQueue("El usuario: " + activeUser.UserName + " ha iniciado un chat con: " + userToChat.UserName);
             activeUser.ChatingWith = splitedData[0];
 
 
@@ -508,6 +528,8 @@ namespace ServerProyect
                 var userResponse = protocol.RecieveData(clientSocket);
                 if (userResponse.Equals("si"))
                 {
+                    StartQueue();
+                    SendToQueue("Un usuario acepto un archivo");
                     waitingAnswer = false;
                     protocol.SendData("1", clientSocket);
                     FileStream file = new FileStream(fileToSend.FileServerPath, FileMode.Open, FileAccess.Read);
@@ -524,6 +546,8 @@ namespace ServerProyect
                     {
                         waitingAnswer = false;
                         protocol.SendData("2", clientSocket);
+                        StartQueue();
+                        SendToQueue("Un usuario rechazo un archivo");
                     }
                     else
                     {
@@ -567,6 +591,8 @@ namespace ServerProyect
 
                     protocol.SendData("/3", clientSocket);
                     protocol.SendData("Archivo enviado...", clientSocket);
+                    StartQueue();
+                    SendToQueue("El usuario: " + activeUser.UserName + " envio un archivo al usuario: " + userToChat.UserName);
 
                 }
                 else
@@ -583,6 +609,8 @@ namespace ServerProyect
                         activeUser.ChatingWith = "NO USER";
                         string responseMessage = "/1";
                         protocol.SendData(responseMessage, clientSocket);
+                        StartQueue();
+                        SendToQueue("El usuario: " + activeUser.UserName + " ha salido de su chat abierto");
                         break;
                     case "/files":
                         GetPendingFiles(currentChat, clientSocket, activeUser, false);
@@ -594,8 +622,6 @@ namespace ServerProyect
                 }
             }
         }
-
-
 
         private static void RecieveFile(string messageRecieved, User activeUser, User userToChat, TcpClient clientSocket, Chat currentChat)
         {
@@ -678,5 +704,100 @@ namespace ServerProyect
 
         }
 
+
+        #region Remoting
+        public override List<User> GetUsers()
+        {
+            return registeredUsers;
+        }
+
+        public override bool RegisterUser(string name, string pass)
+        {
+            User userExists = GetUser(name);
+            if (userExists == null) 
+            {
+                User newUser = new User();
+                newUser.UserName = name;
+                newUser.Password = pass;
+                lock (userLocker)
+                {
+                    registeredUsers.Add(newUser);
+
+                }
+                StartQueue();
+                SendToQueue("Un administrador registro con exito al usuario: " + name);
+                return true;
+            }
+            return false;
+        }
+
+        public override bool DeleteUser(string name)
+        {
+            User user = GetUser(name);
+            if(user != null)
+            {
+                if (!user.Connected)
+                {
+                    lock (userLocker)
+                    {
+                        registeredUsers.Remove(user);
+                    }
+                    StartQueue();
+                    SendToQueue("Un administrador elimino con exito al usuario: " + name);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public override bool ModifyUser(string name, string newName, string newPass)
+        {
+            User user = GetUser(name);
+            if (user != null)
+            {
+                if (!user.Connected)
+                {
+                    lock (userLocker)
+                    {
+                        user.UserName = newName;
+                        user.Password = newPass;
+                    }
+                    StartQueue();
+                    SendToQueue("Un administrador modifico con exito al usuario: " + name + " (actual " + newName + ")");
+                    return true;
+                }
+            }
+            return false;
+        }
+        #endregion
+        #region MessageQueuing
+        public static void StartQueue()
+        {
+            string queueName = ".\\private$\\test";
+            MessageQueue mq;
+            if (MessageQueue.Exists(queueName))
+            {
+                mq = new MessageQueue(queueName);
+            }
+            else
+            {
+                mq = MessageQueue.Create(queueName);
+            }
+        }
+        public static void SendToQueue(string messageToSend)
+        {
+            string queueName = ".\\private$\\test";
+            MessageQueue mq;
+            if (MessageQueue.Exists(queueName))
+            {
+                mq = new MessageQueue(queueName);
+            }
+            else
+            {
+                mq = MessageQueue.Create(queueName);
+            }
+            mq.Send(messageToSend);
+        }
+        #endregion
     }
 }

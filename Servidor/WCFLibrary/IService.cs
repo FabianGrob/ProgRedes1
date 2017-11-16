@@ -12,24 +12,24 @@ namespace WCFLibrary
     public interface IService
     {
         [OperationContract]
-        string GetData(int value);
+        bool RegisterUser(string name, string pass);
 
         [OperationContract]
-        string RegisterUser(string name, string pass);
+        bool DeleteUser(string name);
 
         [OperationContract]
-        string DeleteUser(string name);
-
-        [OperationContract]
-        string ModifyUser(string name, string newName, string newPass);
+        bool ModifyUser(string name, string newName, string newPass);
 
         [OperationContract]
         List<User> GetUsers();
 
+
+        //Ya venian
         [OperationContract]
         CompositeType GetDataUsingDataContract(CompositeType composite);
 
-        // TODO: agregue aquí sus operaciones de servicio
+        [OperationContract]
+        string GetData(int value);
     }
 
     // Utilice un contrato de datos, como se ilustra en el ejemplo siguiente, para agregar tipos compuestos a las operaciones de servicio.

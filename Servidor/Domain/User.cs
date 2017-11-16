@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain
 {
+    [Serializable]
     public class User
     {    
         public string UserName { get; set; }
@@ -26,6 +27,7 @@ namespace Domain
             Friends = new List<User>();
             Connections = 0;
             ConnectedSince = DateTime.Now;
+            ChatingWith = "noUser";
 
         }
 

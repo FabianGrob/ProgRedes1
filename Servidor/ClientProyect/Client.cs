@@ -112,13 +112,11 @@ namespace ClientProyect
             {
                 case "CONNECT":
                     Console.WriteLine("Usuario conectado");
-                    StartQueue();
-                    SendToQueue("Se ha conectado con exito el siguiente usuario: " + userName);
+                   
                     return true;
                 case "REGISTERED":
                     Console.WriteLine("Usuario registrado");
-                    StartQueue();
-                    SendToQueue("Se ha registrado con exito el siguiente usuario: " + userName);
+                   
                     return true;
                 case "DUPLICATED":
                     Console.WriteLine("Este usuario ya esta conectado");
@@ -202,14 +200,12 @@ namespace ClientProyect
 
                         case "REQUESTSENT":
                             Console.WriteLine("Solicitud enviada.");
-                            StartQueue();
-                            SendToQueue("El usuario: " + user + " ha enviado una solicitud a " + line3);
+                           
                             break;
 
                         case "ADDED":
                             Console.WriteLine("Agregado con exito!");
-                            StartQueue();
-                            SendToQueue("Los usuarios: " + user + " y " + line3 + " ahora son amigos");
+                           
                             break;
                     }
                     break;
@@ -253,8 +249,7 @@ namespace ClientProyect
                             SendOption(option, clientSocket);
                             string response = protocol.RecieveData(clientSocket);
                             Console.WriteLine(response);
-                            StartQueue();
-                            SendToQueue("Accion del usuario: " + user + " => " + response);
+                           
                             break;
                     }
                     break;
@@ -280,8 +275,7 @@ namespace ClientProyect
                             Console.WriteLine($"Chat con {contactName}:");
                             Console.WriteLine($"Escriba 'exit' para salir.");
                             finishChat = false;
-                            StartQueue();
-                            SendToQueue("El usuario: " + user + " ha iniciado un chat con: " + contactName);
+                            
                             Thread reciveMessageThread = new Thread(() => GetMessage());
                             reciveMessageThread.Start();
                             Thread sendMessageThread = new Thread(() => SendMessage());
@@ -298,8 +292,7 @@ namespace ClientProyect
                 case 6:
                     keepConnection = false;
                     Console.WriteLine(message);
-                    StartQueue();
-                    SendToQueue("El usuario: " + user + "se ha desconectado");
+                   
                     break;
 
             }
@@ -352,8 +345,7 @@ namespace ClientProyect
                 {
                     case "/1":
                         finishChat = true;
-                        StartQueue();
-                        SendToQueue("El usuario: " + user + " ha salido de su chat abierto");
+                       
                         break;
 
                     case "/2":
@@ -388,11 +380,13 @@ namespace ClientProyect
                                         string filePath = ConfigurationManager.AppSettings["downloadFileRoute"] + fileName;
                                         protocol.RecieveFile(clientSocket, filePath, Int32.Parse(noOfPackets));
                                         waitingClientResponse = false;
+                                        
                                     }
                                     if (serverMessage.Equals("2"))
                                     {
                                         Console.WriteLine("Archivo rechazado.");
                                         waitingClientResponse = false;
+                                       
                                     }
                                     if (serverMessage.Equals("3"))
                                     {
@@ -443,6 +437,7 @@ namespace ClientProyect
                                 int noOfPackets = protocol.CalculateNoOfPackets(file);
                                 protocol.SendData("" + noOfPackets, clientSocket);
                                 protocol.SendFile(file, clientSocket);
+                               
                             }
                         }
                         if (messageToSend.Equals("/files"))
@@ -474,32 +469,5 @@ namespace ClientProyect
 
         }
 
-        public static void StartQueue()
-        {
-            string queueName = ".\\private$\\test";
-            MessageQueue mq;
-            if (MessageQueue.Exists(queueName))
-            {
-                mq = new MessageQueue(queueName);
-            }
-            else
-            {
-                mq = MessageQueue.Create(queueName);
-            }
-        }
-        public static void SendToQueue(string messageToSend)
-        {
-            string queueName = ".\\private$\\test";
-            MessageQueue mq;
-            if (MessageQueue.Exists(queueName))
-            {
-                mq = new MessageQueue(queueName);
-            }
-            else
-            {
-                mq = MessageQueue.Create(queueName);
-            }
-            mq.Send(messageToSend);
-        }
     }
 }

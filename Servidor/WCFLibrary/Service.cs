@@ -5,21 +5,61 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Text;
 using Domain;
+using ServerProyect;
+using System.Runtime.Remoting.Channels.Tcp;
+using System.Runtime.Remoting.Channels;
 
 namespace WCFLibrary
 {
     public class Service : IService
     {
-        public string DeleteUser(string name)
+        private RemotingShared lShared;
+
+        private void StablishConnection()
         {
-            throw new NotImplementedException();
+            string lPath = "tcp://" + RemotingShared.ServerIpAddress + ":" + RemotingShared.Port + "/" + RemotingShared.RemotingName;
+            TcpChannel lTcpChannel = new TcpChannel();
+
+            if (!ChannelServices.RegisteredChannels.Any(lChannel => lChannel.ChannelName == lTcpChannel.ChannelName))
+            {
+                ChannelServices.RegisterChannel(lTcpChannel, true);
+            }
+
+            lShared = (RemotingShared)Activator.GetObject(typeof(RemotingShared), lPath);
         }
 
-        public string GetData(int value)
+        public bool DeleteUser(string name)
         {
-            return string.Format("You entered: {0}", value);
+            StablishConnection();
+            bool response = lShared.DeleteUser(name);
+            return response;
         }
 
+        public List<User> GetUsers()
+        {
+            StablishConnection();
+            List<User> response = lShared.GetUsers();
+            return response;
+        }
+
+        public bool ModifyUser(string name, string newName, string newPass)
+        {
+            StablishConnection();
+            bool response = lShared.ModifyUser(name, newName, newPass);
+            return response;
+        }
+
+        public bool RegisterUser(string name, string pass)
+        {
+            StablishConnection();
+            bool response = lShared.RegisterUser(name, pass);
+            return response;
+        }
+
+
+
+
+        //ya venian
         public CompositeType GetDataUsingDataContract(CompositeType composite)
         {
             if (composite == null)
@@ -33,19 +73,11 @@ namespace WCFLibrary
             return composite;
         }
 
-        public List<User> GetUsers()
+        public string GetData(int value)
         {
-            throw new NotImplementedException();
+            return string.Format("You entered: {0}", value);
         }
 
-        public string ModifyUser(string name, string newName, string newPass)
-        {
-            throw new NotImplementedException();
-        }
 
-        public string RegisterUser(string name, string pass)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

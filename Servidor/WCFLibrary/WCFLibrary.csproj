@@ -38,6 +38,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml" />
@@ -55,6 +56,10 @@
     <ProjectReference Include="..\Domain\Domain.csproj">
       <Project>{785117CE-B21A-42F3-B7FC-7D56ED23B15C}</Project>
       <Name>Domain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServerProyect\ServerProyect.csproj">
+      <Project>{F73EBF7F-00F9-4872-95CE-E9F5C4BCA8EF}</Project>
+      <Name>ServerProyect</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
