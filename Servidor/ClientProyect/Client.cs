@@ -24,7 +24,7 @@ namespace ClientProyect
         public static bool finishChat = false;
         public static bool sendingFile = false;
         public static bool recievingFiles = false;
-        
+
 
         static void Main(string[] args)
         {
@@ -348,58 +348,61 @@ namespace ClientProyect
             {
                 clientStream = clientSocket.GetStream();
                 string message = protocol.RecieveData(clientSocket);
-                if (message.Equals("/1"))
+                switch (message)
                 {
-                    finishChat = true;
-                    StartQueue();
-                    SendToQueue("El usuario: " + user + " ha salido de su chat abierto");
-                }
-                if (message.Equals("/2"))
-                {
-                    sendingFile = true;
-                }
-                if (message.Equals("/3"))
-                {
-                    sendingFile = false;
-                }
-                if (message.Equals("/4"))
-                {
-                    recievingFiles = true;
-                    while (recievingFiles)
-                    {
+                    case "/1":
+                        finishChat = true;
+                        StartQueue();
+                        SendToQueue("El usuario: " + user + " ha salido de su chat abierto");
+                        break;
+
+                    case "/2":
+                        sendingFile = true;
+                        break;
+
+                    case "/3":
+                        sendingFile = false;
+                        break;
+
+                    case "/4":
+                        recievingFiles = true;
                         Console.WriteLine("Este usuario desea enviarle un archivo, desea aceptarlo? si o no");
                         var response = Console.ReadLine();
                         protocol.SendData(response, clientSocket);
-                        var serverMessage = protocol.RecieveData(clientSocket);
-                        if (serverMessage.Equals("1"))
-                        {
-                            Console.WriteLine("Indique la ruta donde quiere guardar el archivo incluido el nombre: ");
-                            var responsePath = Console.ReadLine();
-                            protocol.RecieveFile(clientSocket, responsePath);
-                            recievingFiles = false;
 
-                        }
-                        if (serverMessage.Equals("2"))
+                        while (recievingFiles)
                         {
-                            Console.WriteLine("Archivo rechazado.");
-                            recievingFiles = false;
+                            var serverMessage = protocol.RecieveData(clientSocket);
+                            if (serverMessage.Equals("1"))
+                            {
+                                Console.WriteLine("Archivo guardado en" + ConfigurationManager.AppSettings["downloadFileRoute"]);
+                                string noOfPackets = protocol.RecieveData(clientSocket);
+                                string fileName = protocol.RecieveData(clientSocket);
+                                string filePath = ConfigurationManager.AppSettings["downloadFileRoute"] + fileName;
+                                protocol.RecieveFile(clientSocket, filePath, Int32.Parse(noOfPackets));
+                                recievingFiles = false;
+                            }
+                            if (serverMessage.Equals("2"))
+                            {
+                                Console.WriteLine("Archivo rechazado.");
+                                recievingFiles = false;
+                            }
+                            if (serverMessage.Equals("3"))
+                            {
+                                Console.WriteLine("Indique una opcion valida. si o no");
+                                var newResponse = Console.ReadLine();
+                                protocol.SendData(newResponse, clientSocket);
+                            }
                         }
-                        if (serverMessage.Equals("3"))
-                        {
-                            Console.WriteLine("Indique una opcion valida. si o no");
-                            var newResponse = Console.ReadLine();
-                            protocol.SendData(newResponse, clientSocket);
-                        }
-                    }
-                }
+                        break;
 
-                else
-                {
-                    string[] chatHistory = message.Split('#');
-                    for (int i = 0; i < chatHistory.Length; i++)
-                    {
-                        Console.WriteLine(chatHistory[i]);
-                    }
+                    default:
+                        string[] chatHistory = message.Split('#');
+                        for (int i = 0; i < chatHistory.Length; i++)
+                        {
+                            Console.WriteLine(chatHistory[i]);
+                        }
+                        break;
                 }
             }
         }
@@ -421,6 +424,8 @@ namespace ClientProyect
                         {
                             string filePath = GetFilePath(messageToSend);
                             FileStream file = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                            int noOfPackets = protocol.CalculateNoOfPackets(file);
+                            protocol.SendData("" + noOfPackets, clientSocket);
                             protocol.SendFile(file, clientSocket);
                         }
                     }
@@ -440,7 +445,7 @@ namespace ClientProyect
                 }
                 return finalPath;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return finalPath;
             }

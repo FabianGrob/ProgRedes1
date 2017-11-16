@@ -434,7 +434,8 @@ namespace ServerProyect
             {
                 User1 = activeUser,
                 User2 = userToChat,
-                Messages = new List<Domain.Message>()
+                Messages = new List<Domain.Message>(),
+                Files = new List<SentFile>()
             };
             Chat currentChat = GetChat(newChat);
 
@@ -467,16 +468,24 @@ namespace ServerProyect
 
         private static void GetPendingFiles(Chat currentChat, TcpClient clientSocket, User activeUser)
         {
+            List<SentFile> toDelete = new List<SentFile>();
+
             foreach (var sentFile in currentChat.Files)
             {
-                if(!sentFile.User.UserName.Equals(activeUser.UserName))
+                if (!sentFile.User.UserName.Equals(activeUser.UserName))
                 {
-                    OfferFiles(sentFile.FileName, clientSocket, currentChat);
+                    toDelete.Add(sentFile);
+                    OfferFile(sentFile, clientSocket, currentChat);
                 }
             }
+            foreach (var file in toDelete)
+            {
+                DeleteServerFile(file.FileServerPath, currentChat);
+            }
+
         }
 
-        private static void OfferFiles(string fileName, TcpClient clientSocket, Chat currentChat)
+        private static void OfferFile(SentFile fileToSend, TcpClient clientSocket, Chat currentChat)
         {
             bool waitingAnswer = true;
             while (waitingAnswer)
@@ -487,9 +496,13 @@ namespace ServerProyect
                 {
                     waitingAnswer = false;
                     protocol.SendData("1", clientSocket);
-                    FileStream file = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                    FileStream file = new FileStream(fileToSend.FileServerPath, FileMode.Open, FileAccess.Read);
+                    int noOfPackets = protocol.CalculateNoOfPackets(file);
+
+                    protocol.SendData("" + noOfPackets, clientSocket);
+                    protocol.SendData(fileToSend.FileName, clientSocket);
                     protocol.SendFile(file, clientSocket);
-                    DeleteServerFile(fileName, currentChat);
+
                 }
                 else
                 {
@@ -497,7 +510,6 @@ namespace ServerProyect
                     {
                         waitingAnswer = false;
                         protocol.SendData("2", clientSocket);
-                        DeleteServerFile(fileName, currentChat);
                     }
                     else
                     {
@@ -507,15 +519,22 @@ namespace ServerProyect
             }
         }
 
-        private static void DeleteServerFile(string fileName, Chat currentChat)
+        private static void DeleteServerFile(string path, Chat currentChat)
+        {
+            SentFile file = GetFile(path, currentChat);
+            currentChat.Files.Remove(file);
+        }
+
+        private static SentFile GetFile(string path, Chat currentChat)
         {
             foreach (var file in currentChat.Files)
             {
-                if (file.FileName.Equals(fileName))
+                if (file.FileServerPath.Equals(path))
                 {
-                    currentChat.Files.Remove(file);
+                    return file;
                 }
             }
+            return null;
         }
 
         private static void ExecuteCommand(string messageRecieved, User activeUser, User userToChat, TcpClient clientSocket, Chat currentChat, ref bool chating)
@@ -525,7 +544,7 @@ namespace ServerProyect
                 var splited = messageRecieved.Split(' ');
                 if (splited[0].Equals("/send"))
                 {
-                    string filePath = splited[1];
+                    string filePath = GetFilePath(messageRecieved);
 
                     protocol.SendData("Enviando el archivo...", clientSocket);
                     protocol.SendData("/2", clientSocket);
@@ -535,11 +554,6 @@ namespace ServerProyect
                     protocol.SendData("/3", clientSocket);
                     protocol.SendData("Archivo enviado...", clientSocket);
 
-
-                    if (userToChat.ChatingWith.Equals(activeUser.UserName))
-                    {
-                        OfferNewFiles(userToChat, currentChat);
-                    }
                 }
                 else
                 {
@@ -548,68 +562,87 @@ namespace ServerProyect
             }
             else
             {
-                if (messageRecieved.Equals("/exit"))
+                switch (messageRecieved)
                 {
-                    chating = false;
-                    activeUser.ChatingWith = "NO USER";
-                    string responseMessage = "/1";
-                    protocol.SendData(responseMessage, clientSocket);
-                }
-                else
-                {
-                    protocol.SendData("Comando invalido", clientSocket);
+                    case "/exit":
+                        chating = false;
+                        activeUser.ChatingWith = "NO USER";
+                        string responseMessage = "/1";
+                        protocol.SendData(responseMessage, clientSocket);
+                        break;
+                    case "/files":
+                        GetPendingFiles(currentChat, clientSocket, activeUser);
+                        break;
+                    default:
+                        protocol.SendData("Comando invalido", clientSocket);
+                        break;
+
                 }
             }
         }
 
-        private static void OfferNewFiles(User userToChat, Chat currentChat)
-        {
-            bool waitingAnswer = true;
-            while (waitingAnswer)
-            {
-                var userSocket = (TcpClient)clientsList[userToChat.UserName];
-                protocol.SendData("/4", userSocket);
-                var userResponse = protocol.RecieveData(userSocket);
-                if (userResponse.Equals("si"))
-                {
-                    waitingAnswer = false;
-                    protocol.SendData("1", userSocket);
-                    FileStream file = new FileStream(currentChat.Files[0].FileName, FileMode.Open, FileAccess.Read);
-                    protocol.SendFile(file, userSocket);
-                    currentChat.Files.RemoveAt(0);
-                }
-                else
-                {
-                    if (userResponse.Equals("no"))
-                    {
-                        waitingAnswer = false;
-                        currentChat.Files.RemoveAt(0);
-                        protocol.SendData("2", userSocket);
-                    }
-                    else
-                    {
-                        protocol.SendData("3", userSocket);
-                    }
-                }
-            }
-        }
+        //private static void OfferNewFiles(User userToChat, Chat currentChat)
+        //{
+        //    bool waitingAnswer = true;
+        //    while (waitingAnswer)
+        //    {
+        //        var userSocket = (TcpClient)clientsList[userToChat.UserName];
+        //        protocol.SendData("/4", userSocket);
+        //        var userResponse = protocol.RecieveData(userSocket);
+        //        if (userResponse.Equals("si"))
+        //        {
+        //            waitingAnswer = false;
+        //            protocol.SendData("1", userSocket);
+        //            FileStream file = new FileStream(currentChat.Files[0].FileServerPath, FileMode.Open, FileAccess.Read);
+        //            int noOfPackets = protocol.CalculateNoOfPackets(file);
+        //            protocol.SendData("" + noOfPackets, userSocket);
+        //            protocol.SendData(currentChat.Files[0].FileName, userSocket);
+        //            protocol.SendFile(file, userSocket);
+        //            currentChat.Files.RemoveAt(0);
+        //        }
+        //        else
+        //        {
+        //            if (userResponse.Equals("no"))
+        //            {
+        //                waitingAnswer = false;
+        //                currentChat.Files.RemoveAt(0);
+        //                protocol.SendData("2", userSocket);
+        //            }
+        //            else
+        //            {
+        //                protocol.SendData("3", userSocket);
+        //            }
+        //        }
+        //    }
+        //}
 
         private static void RecieveFile(string messageRecieved, User activeUser, User userToChat, TcpClient clientSocket, Chat currentChat)
         {
             string filePath = GetFilePath(messageRecieved);
 
-            string SaveFileName = filePath + "Server_File";
-            if (SaveFileName != string.Empty)
-            {
-                protocol.RecieveFile(clientSocket, SaveFileName);
-            }
-
             SentFile newFile = new SentFile()
             {
-                FileName = SaveFileName,
+                FileName = GetFileName(filePath),
+                FileServerPath = ConfigurationManager.AppSettings["saveFileRoute"] + "serverFile" + GetFileName(filePath),
                 User = activeUser
             };
-            currentChat.Files.Add(newFile);
+
+
+            if (newFile.FileServerPath != string.Empty)
+            {
+                string noOfPackets = protocol.RecieveData(clientSocket);
+                protocol.RecieveFile(clientSocket, newFile.FileServerPath, Int32.Parse(noOfPackets));
+            }
+
+                currentChat.Files.Add(newFile);
+
+
+        }
+
+        private static string GetFileName(string filePath)
+        {
+            var splited = filePath.Split('\\');
+            return splited[splited.Length - 1];
         }
 
         private static string GetFilePath(string message)

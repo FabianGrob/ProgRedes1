@@ -13,6 +13,7 @@ namespace Connection
         string RecieveData(TcpClient socket);
         void SendData(string message, TcpClient socket);
         void SendFile(FileStream file, TcpClient socket);
-        void RecieveFile(TcpClient socket, string fileName);
+        void RecieveFile(TcpClient socket, string fileName, int noOfPackets);
+        int CalculateNoOfPackets(FileStream file);
     }
 }
