@@ -365,35 +365,50 @@ namespace ClientProyect
                         break;
 
                     case "/4":
-                        recievingFiles = true;
-                        Console.WriteLine("Este usuario desea enviarle un archivo, desea aceptarlo? si o no");
-                        var response = Console.ReadLine();
-                        protocol.SendData(response, clientSocket);
+                        var fileAmount = protocol.RecieveData(clientSocket);
 
-                        while (recievingFiles)
+                        if(Int32.Parse(fileAmount) > 0)
                         {
-                            var serverMessage = protocol.RecieveData(clientSocket);
-                            if (serverMessage.Equals("1"))
+                            recievingFiles = true;
+                            for (int i = 0; i < Int32.Parse(fileAmount); i++)
                             {
-                                Console.WriteLine("Archivo guardado en" + ConfigurationManager.AppSettings["downloadFileRoute"]);
-                                string noOfPackets = protocol.RecieveData(clientSocket);
-                                string fileName = protocol.RecieveData(clientSocket);
-                                string filePath = ConfigurationManager.AppSettings["downloadFileRoute"] + fileName;
-                                protocol.RecieveFile(clientSocket, filePath, Int32.Parse(noOfPackets));
-                                recievingFiles = false;
+                                Console.WriteLine("Este usuario desea enviarle un archivo, desea aceptarlo? si o no");
+                                var response = Console.ReadLine();
+                                protocol.SendData(response, clientSocket);
+
+                                bool waitingClientResponse = true;
+                                while (waitingClientResponse)
+                                {
+                                    var serverMessage = protocol.RecieveData(clientSocket);
+                                    if (serverMessage.Equals("1"))
+                                    {
+                                        Console.WriteLine("Archivo guardado en: " + ConfigurationManager.AppSettings["downloadFileRoute"]);
+                                        string noOfPackets = protocol.RecieveData(clientSocket);
+                                        string fileName = protocol.RecieveData(clientSocket);
+                                        string filePath = ConfigurationManager.AppSettings["downloadFileRoute"] + fileName;
+                                        protocol.RecieveFile(clientSocket, filePath, Int32.Parse(noOfPackets));
+                                        waitingClientResponse = false;
+                                    }
+                                    if (serverMessage.Equals("2"))
+                                    {
+                                        Console.WriteLine("Archivo rechazado.");
+                                        waitingClientResponse = false;
+                                    }
+                                    if (serverMessage.Equals("3"))
+                                    {
+                                        Console.WriteLine("Indique una opcion valida. si o no");
+                                        var newResponse = Console.ReadLine();
+                                        protocol.SendData(newResponse, clientSocket);
+                                    }
+                                }
                             }
-                            if (serverMessage.Equals("2"))
-                            {
-                                Console.WriteLine("Archivo rechazado.");
-                                recievingFiles = false;
-                            }
-                            if (serverMessage.Equals("3"))
-                            {
-                                Console.WriteLine("Indique una opcion valida. si o no");
-                                var newResponse = Console.ReadLine();
-                                protocol.SendData(newResponse, clientSocket);
-                            }
-                        }
+                            recievingFiles = false;
+                        }                        
+                        break;
+
+                    case "/4.2":
+                        Console.WriteLine("No hay archivos pendientes para recibir.");
+                        recievingFiles = false;
                         break;
 
                     default:
@@ -417,18 +432,25 @@ namespace ClientProyect
                     string messageToSend = $"{message}";
                     protocol.SendData(messageToSend, clientSocket);
 
-                    if (messageToSend.Contains(" "))
-                    {
-                        string[] splitedMessage = messageToSend.Split(' ');
-                        if (messageToSend.Split(' ')[0].Equals("/send"))
+                    if (messageToSend[0]== '/'){
+                        if (messageToSend.Contains(" "))
                         {
-                            string filePath = GetFilePath(messageToSend);
-                            FileStream file = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-                            int noOfPackets = protocol.CalculateNoOfPackets(file);
-                            protocol.SendData("" + noOfPackets, clientSocket);
-                            protocol.SendFile(file, clientSocket);
+                            string[] splitedMessage = messageToSend.Split(' ');
+                            if (messageToSend.Split(' ')[0].Equals("/send"))
+                            {
+                                string filePath = GetFilePath(messageToSend);
+                                FileStream file = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                                int noOfPackets = protocol.CalculateNoOfPackets(file);
+                                protocol.SendData("" + noOfPackets, clientSocket);
+                                protocol.SendFile(file, clientSocket);
+                            }
+                        }
+                        if (messageToSend.Equals("/files"))
+                        {
+                            recievingFiles = true;
                         }
                     }
+                    
                 }
             }
         }

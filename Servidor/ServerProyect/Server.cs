@@ -440,7 +440,7 @@ namespace ServerProyect
             Chat currentChat = GetChat(newChat);
 
             GetChatMessages(currentChat, clientSocket);
-            GetPendingFiles(currentChat, clientSocket, activeUser);
+            GetPendingFiles(currentChat, clientSocket, activeUser, true);
 
             bool chating = true;
             while (chating)
@@ -466,19 +466,34 @@ namespace ServerProyect
             }
         }
 
-        private static void GetPendingFiles(Chat currentChat, TcpClient clientSocket, User activeUser)
+        private static void GetPendingFiles(Chat currentChat, TcpClient clientSocket, User activeUser, bool loadingChat)
         {
-            List<SentFile> toDelete = new List<SentFile>();
+            List<SentFile> toSend = new List<SentFile>();
+            bool pendingFiles = false;
+            protocol.SendData("/4", clientSocket);
 
             foreach (var sentFile in currentChat.Files)
             {
                 if (!sentFile.User.UserName.Equals(activeUser.UserName))
                 {
-                    toDelete.Add(sentFile);
-                    OfferFile(sentFile, clientSocket, currentChat);
+                    pendingFiles = true;
+                    toSend.Add(sentFile);
+                    
                 }
             }
-            foreach (var file in toDelete)
+            int fileAmount = toSend.Count;
+            protocol.SendData(fileAmount.ToString(), clientSocket);
+
+            foreach (var file in toSend)
+            {
+                OfferFile(file, clientSocket, currentChat);
+            }
+
+            if (!pendingFiles && !loadingChat)
+            {
+                protocol.SendData("/4.2", clientSocket);
+            }
+            foreach (var file in toSend)
             {
                 DeleteServerFile(file.FileServerPath, currentChat);
             }
@@ -490,7 +505,6 @@ namespace ServerProyect
             bool waitingAnswer = true;
             while (waitingAnswer)
             {
-                protocol.SendData("/4", clientSocket);
                 var userResponse = protocol.RecieveData(clientSocket);
                 if (userResponse.Equals("si"))
                 {
@@ -571,7 +585,7 @@ namespace ServerProyect
                         protocol.SendData(responseMessage, clientSocket);
                         break;
                     case "/files":
-                        GetPendingFiles(currentChat, clientSocket, activeUser);
+                        GetPendingFiles(currentChat, clientSocket, activeUser, false);
                         break;
                     default:
                         protocol.SendData("Comando invalido", clientSocket);
@@ -581,40 +595,7 @@ namespace ServerProyect
             }
         }
 
-        //private static void OfferNewFiles(User userToChat, Chat currentChat)
-        //{
-        //    bool waitingAnswer = true;
-        //    while (waitingAnswer)
-        //    {
-        //        var userSocket = (TcpClient)clientsList[userToChat.UserName];
-        //        protocol.SendData("/4", userSocket);
-        //        var userResponse = protocol.RecieveData(userSocket);
-        //        if (userResponse.Equals("si"))
-        //        {
-        //            waitingAnswer = false;
-        //            protocol.SendData("1", userSocket);
-        //            FileStream file = new FileStream(currentChat.Files[0].FileServerPath, FileMode.Open, FileAccess.Read);
-        //            int noOfPackets = protocol.CalculateNoOfPackets(file);
-        //            protocol.SendData("" + noOfPackets, userSocket);
-        //            protocol.SendData(currentChat.Files[0].FileName, userSocket);
-        //            protocol.SendFile(file, userSocket);
-        //            currentChat.Files.RemoveAt(0);
-        //        }
-        //        else
-        //        {
-        //            if (userResponse.Equals("no"))
-        //            {
-        //                waitingAnswer = false;
-        //                currentChat.Files.RemoveAt(0);
-        //                protocol.SendData("2", userSocket);
-        //            }
-        //            else
-        //            {
-        //                protocol.SendData("3", userSocket);
-        //            }
-        //        }
-        //    }
-        //}
+
 
         private static void RecieveFile(string messageRecieved, User activeUser, User userToChat, TcpClient clientSocket, Chat currentChat)
         {
@@ -695,21 +676,6 @@ namespace ServerProyect
 
             protocol.SendData(messagesToShow, clientSocket);
 
-        }
-
-        public static void SendLog(string messageToSend)
-        {
-            string queueName = ".\\private$\\test";
-            MessageQueue mq;
-            if (MessageQueue.Exists(queueName))
-            {
-                mq = new MessageQueue(queueName);
-            }
-            else
-            {
-                mq = MessageQueue.Create(queueName);
-            }
-            mq.Send(messageToSend);
         }
 
     }
