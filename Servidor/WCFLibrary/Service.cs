@@ -4,12 +4,17 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Text;
+using Domain;
 
 namespace WCFLibrary
 {
-    // NOTA: puede usar el comando "Rename" del menú "Refactorizar" para cambiar el nombre de clase "Service1" en el código y en el archivo de configuración a la vez.
-    public class Service1 : IService1
+    public class Service : IService
     {
+        public string DeleteUser(string name)
+        {
+            throw new NotImplementedException();
+        }
+
         public string GetData(int value)
         {
             return string.Format("You entered: {0}", value);
@@ -26,6 +31,21 @@ namespace WCFLibrary
                 composite.StringValue += "Suffix";
             }
             return composite;
+        }
+
+        public List<User> GetUsers()
+        {
+            throw new NotImplementedException();
+        }
+
+        public string ModifyUser(string name, string newName, string newPass)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string RegisterUser(string name, string pass)
+        {
+            throw new NotImplementedException();
         }
     }
 }

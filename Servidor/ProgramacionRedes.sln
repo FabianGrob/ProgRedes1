@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2008
+VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Connection", "Connection\Connection.csproj", "{FE7A23F6-2E26-4459-9BFE-840A272AEC67}"
 EndProject
@@ -14,6 +14,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Log", "ConsoleApp1\Log.csproj", "{98EFC39A-5B46-420A-8F85-4AB19A933218}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WCFLibrary", "WCFLibrary\WCFLibrary.csproj", "{DD8FEE02-3169-4192-B7AA-22E59EAE575C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdminClient", "AdminClient\AdminClient.csproj", "{D1173B42-1CDB-416F-9489-480EF2CCBFA8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DD8FEE02-3169-4192-B7AA-22E59EAE575C} = {DD8FEE02-3169-4192-B7AA-22E59EAE575C}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -123,6 +128,22 @@ Global
 		{DD8FEE02-3169-4192-B7AA-22E59EAE575C}.Release|x64.Build.0 = Release|Any CPU
 		{DD8FEE02-3169-4192-B7AA-22E59EAE575C}.Release|x86.ActiveCfg = Release|Any CPU
 		{DD8FEE02-3169-4192-B7AA-22E59EAE575C}.Release|x86.Build.0 = Release|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Debug|ARM.Build.0 = Debug|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Debug|x64.Build.0 = Debug|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Debug|x86.Build.0 = Debug|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Release|ARM.ActiveCfg = Release|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Release|ARM.Build.0 = Release|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Release|x64.ActiveCfg = Release|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Release|x64.Build.0 = Release|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Release|x86.ActiveCfg = Release|Any CPU
+		{D1173B42-1CDB-416F-9489-480EF2CCBFA8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -7,12 +8,23 @@ using System.Text;
 
 namespace WCFLibrary
 {
-    // NOTA: puede usar el comando "Rename" del menú "Refactorizar" para cambiar el nombre de interfaz "IService1" en el código y en el archivo de configuración a la vez.
     [ServiceContract]
-    public interface IService1
+    public interface IService
     {
         [OperationContract]
         string GetData(int value);
+
+        [OperationContract]
+        string RegisterUser(string name, string pass);
+
+        [OperationContract]
+        string DeleteUser(string name);
+
+        [OperationContract]
+        string ModifyUser(string name, string newName, string newPass);
+
+        [OperationContract]
+        List<User> GetUsers();
 
         [OperationContract]
         CompositeType GetDataUsingDataContract(CompositeType composite);
